@@ -1,17 +1,17 @@
+#include <stdlib.h>
+#include <stdio.h>
+
 #define TRUE 1
 #define FALSE 0
 
+typedef unsigned char bool;
+typedef unsigned char byte;
+
+
 typedef struct LineClue
 {
-	int * clues;
+	byte * clues;
+	byte clueCount;
 } LineClue;
 
-typedef struct LineClues 
-{
-	LineClue * lineClues;
-} LineClues;
-
-
-typedef char bool;
-
-void testFunction (void);
+LineClue * createLineClueStruct (int *, int);

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "../include/main.h"
 
 int main (int argc, char ** argv)
@@ -12,6 +13,8 @@ int main (int argc, char ** argv)
 	fPtr = getFile(argc, argv[1]);
 
 	lineClues = readFile(fPtr, &gameBoardWidth, &gameBoardLength);
+
+	printf("Width: %d\nLength: %d\n", gameBoardWidth, gameBoardLength);
 
 	while ((readChar = fgetc(fPtr)) != EOF)
 		printf("%c", readChar);
@@ -66,5 +69,39 @@ FILE * getFile (int argc, char * argv)
 
 LineClues * readFile (FILE * fPtr, int * width, int *length)
 {
-	return NULL;
+	char fileLine[256], * rest = NULL;
+	int numCharsRead = 0, fileLineNum = 0, matchCount = 0;
+
+	/* Reading gameboard width and length from file with validation checking */
+	if (!fgets(fileLine, sizeof(fileLine), fPtr))
+	{
+		printf("Error: Empty file or read error.\n");
+		return NULL;
+	}
+	++fileLineNum;
+	
+	matchCount = sscanf(fileLine, "%d %d %n", width, length, &numCharsRead);
+	if (matchCount != 2)
+	{
+		printf("Invalid file contents line: %d, Expecting a width and length.\n", fileLineNum);
+		return NULL;
+	}
+
+	rest = fileLine + numCharsRead;
+
+	while (*rest != '\0' && isspace((unsigned char) *rest)) ++rest;
+
+	if (*rest != '\0')
+	{
+		printf("Invalid file contents line: %d, Expecting a width and length.\n", fileLineNum);
+		return NULL;
+	}
+
+	/* Reading each line of clues TODO */
+	while (fgets(fileLine, sizeof(fileLine), fPtr))
+	{
+		
+	}
+	
+	return NULL; /* Placeholder */
 }

@@ -7,11 +7,9 @@
 typedef unsigned char bool;
 typedef unsigned char byte;
 
-
-typedef struct LineClue
-{
+typedef struct LineClue {
 	byte * clues;
 	byte clueCount;
 } LineClue;
 
-LineClue * createLineClueStruct (int *, int);
+LineClue * createLineClueSet (int *, int);

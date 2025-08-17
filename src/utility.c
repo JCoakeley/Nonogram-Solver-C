@@ -1,23 +1,33 @@
-#include "../include/utitity.h"
+#include "../include/utility.h"
 
-LineClue * createLineClueStruct(int * clueBuffer, int clueCount)
+/*
+* Takes in an array of integers that is a clueBuffer and a count of the number
+* of integers in the buffer. Allocates the memory needed for a LineClue struct
+* and for the integer array referenced in the struct then adds all the integers
+* from the buffer up to the specified amount and returns a pointer to the
+* created LineClue struct. Will return NULL if either memory allocation step
+* fail, it is the resposibility of the calling function to act on this error.
+*/
+LineClue * createLineClueSet(int * clueBuffer, int clueCount)
 {
 	int i;
-	LineClue * lineClueStruct = (LineClue *)malloc(sizeof(LineClue));
+	LineClue * lineClueSet = (LineClue *)malloc(sizeof(LineClue));
 
-	if (lineClueStruct == NULL)	return NULL;
+	if (lineClueSet == NULL) return NULL;
 
-	lineClueStruct->clueCount = clueCount;
-	lineClueStruct->clues = (byte *)malloc(sizeof(byte) * clueCount);
+	/* Initializing struct data elements */
+	lineClueSet->clueCount = clueCount;
+	lineClueSet->clues = (byte *)malloc(sizeof(byte) * clueCount);
 
-	if (lineClueStruct->clues == NULL)
+	if (lineClueSet->clues == NULL)
 	{
-		free(lineClueStruct);
+		free(lineClueSet);
 		return NULL;
 	}
 
+	/* Copying integers from the buffer up to the specified count */
 	for (i = 0; i < clueCount; ++i)
-		lineClueStruct->clues[i] = clueBuffer[i];
+		lineClueSet->clues[i] = clueBuffer[i];
 	
-	return lineClueStruct;
+	return lineClueSet;
 }

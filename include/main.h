@@ -1,4 +1,4 @@
-#include "../include/utitity.h"
+#include "../include/utility.h"
 
 FILE * getFile (int, char *);
 

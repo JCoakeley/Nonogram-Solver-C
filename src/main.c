@@ -17,6 +17,14 @@ int main (int argc, char ** argv)
 	return EXIT_SUCCESS;
 }
 
+/*
+* TODO: Add a try again prompt instead of endlessly asking for a valid
+* file name until on is provided.
+* 
+* If no argument has been passed in when the program is run then asks the
+* user for a filename. Opens a file stream to the provided filename and returns
+* it. Will loop until a valid filename is provided.
+*/
 FILE * getFile (int argc, char * argv)
 {
 	FILE * fPtr = NULL;
@@ -25,7 +33,8 @@ FILE * getFile (int argc, char * argv)
 
 	do {
 		loop = FALSE;
-		
+
+		/* Filename not passed as argument when calling the program */
 		if (argc == 1)
 		{
 			printf("Please enter a filename: ");
@@ -47,8 +56,10 @@ FILE * getFile (int argc, char * argv)
 		    }
 		}
 
+		/* Filename pass as argument when calling the program */
 		else strcpy(fileName, argv);
 
+		/* If filename passed as argument is invalid, need to prompt user next loop iteration */
 		argc = 1;
 		fPtr = fopen(fileName, "r");
 
@@ -62,6 +73,14 @@ FILE * getFile (int argc, char * argv)
 	return fPtr;
 }
 
+/*
+* TODO: Add support for various delimiters, not just spaces.
+* 
+* Parses file line by line. First reading the width and length from the first line.
+* Then reading each row/column's clue set on each subsequent line storing these clues
+* in a buffer until the entire line is read. Handles reaching EOF early, unexpected
+* characters, max 32 clues per line.
+*/
 LineClue ** readFile (FILE * fPtr, int * width, int * length)
 {
 	char fileLine[256], * rest = NULL;
@@ -97,29 +116,33 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 		return NULL;
 	}
 
+	/* Validating Function */
 	printf("Width: %d\nLength: %d\n", *width, *length);
 
 	lineClues = (LineClue **)malloc(sizeof(LineClue *) * (*width + *length));
 
 	if (lineClues == NULL)
 	{
-		fprintf(stderr, "Error allocating memory for references to each lines clues struct");
+		fprintf(stderr, "Error allocating memory for references to each lines clues struct\n");
 		return NULL;
 	}
 
 	/* Reading each line of clues */
 	for (i = 0; i < (*width + *length); ++i)
-	{
-		j = 0;
-		offset = 0;
-		
+	{		
 		if (!fgets(fileLine, sizeof(fileLine), fPtr))
 		{
 			fprintf(stderr,"Error: EOF unexpectedly reached after line: %d\n", fileLineNum);
 			return NULL;
 		}
+		
 		++fileLineNum;
+		j = 0;
+		offset = 0;
 
+		/* Reading in one integer at a time until a match is not made or buffer limit reached.
+			Adds a progressive offset to the string being passed to sscanf  to accomplish reading
+			one integer at a time. */
 		while (j < 32 && sscanf(fileLine + offset, "%d %n", &clueBuffer[j], &numCharsRead) == 1)
 		{ 
 			if (clueBuffer[j] < 1 || clueBuffer[j] > 50)
@@ -144,19 +167,18 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 			fprintf(stderr,"Invalid contents on line %d: trailing characters after clues.\n", fileLineNum);
 			return NULL;
 		}
-	
-		if (j > 31)
+
+		lineClues[i] = createLineClueSet(clueBuffer, j);
+
+		if (lineClues[i] == NULL)
 		{
-			fprintf(stderr,"Invalid contents on line %d: Too many clues (max 32).\n", fileLineNum);
+			fprintf(stderr,"Error allocating memory for clueSet on line: %d\n", fileLineNum);
 			return NULL;
 		}
 
-		lineClues[i] = createLineClueStruct(clueBuffer, j);
-
+		/* Validating Function */
 		for (j = 0; j < lineClues[i]->clueCount; ++j)
-		{
 			printf("%d ", lineClues[i]->clues[j]);
-		}
 
 		printf("\n");
 	}

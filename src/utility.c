@@ -1,4 +1,5 @@
 #include "../include/utility.h"
+#include <stdlib.h>
 
 /*
 * Takes in an array of integers that is a clueBuffer and a count of the number

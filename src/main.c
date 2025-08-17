@@ -1,18 +1,31 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "../include/main.h"
+#include "../include/utility.h"
+#include "../include/gameBoard.h"
+
+FILE * getFile (int, char *);
+
+LineClue ** readFile (FILE *, int *, int *);
 
 int main (int argc, char ** argv)
 {
 	int gameBoardWidth = 0, gameBoardLength = 0;
 	FILE * fPtr = NULL;
 	LineClue ** lineClues = NULL;
+	int * gameBoard = NULL;
 
 	fPtr = getFile(argc, argv[1]);
 
 	lineClues = readFile(fPtr, &gameBoardWidth, &gameBoardLength);
 
 	if (lineClues == NULL) return EXIT_FAILURE;
+
+	gameBoard = createGameBoard(gameBoardWidth, gameBoardLength);
+	if (gameBoard == NULL) return EXIT_FAILURE;
+
+	printGameBoard(gameBoard, gameBoardWidth, gameBoardLength);
 
 	return EXIT_SUCCESS;
 }

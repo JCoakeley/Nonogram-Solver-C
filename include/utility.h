@@ -1,5 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
+#ifndef UTIL_H
+#define UTIL_H
 
 #define TRUE 1
 #define FALSE 0
@@ -13,3 +13,5 @@ typedef struct LineClue {
 } LineClue;
 
 LineClue * createLineClueSet (int *, int);
+
+#endif

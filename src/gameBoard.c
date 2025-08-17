@@ -5,16 +5,19 @@
 
 /*
 * Creates a gameboard of the specified width and length in contiguous
-* memory. Also zero out each element because elements that are not zero
+* memory. Also sets each element to -1 because elements that are not -1
 * will not be updated in the update function. Pointer to the integer
 * array is returned.
 */
 int * createGameBoard (int width, int length)
 {
-	int * gameBoard = (int *)calloc(sizeof(int), width * length);
+	int * gameBoard = (int *)malloc(sizeof(int) * width * length);
 
 	if (gameBoard == NULL)
 		fprintf(stderr, "Error allocating memory for the gameboard\n");
+
+	else
+		memset(gameBoard, -1, width * length);
 	
 	return gameBoard;
 }
@@ -46,9 +49,9 @@ void printGameBoard (int * gameBoard, int width, int length)
 			if (gameBoard[j + (i * width)] == 1)
 				printf(" ■");
 			else if (gameBoard[j + (i * width)] == 0)
-				printf("  ");
-			else
 				printf(" X");
+			else
+				printf("  ");
 		}
 		printf(" |\n");
 	}
@@ -59,7 +62,7 @@ void printGameBoard (int * gameBoard, int width, int length)
 
 /*
 * Iterates through each element in the specified row of the game board and if the element is
-* unsolved (equals zero) then will update it if it differs from the matching element in rowArr.
+* unsolved (equals -1) then will update it if it differs from the matching element in rowArr.
 * rowArr is the updated partial solution for that row. Tracks which elements are updated in the
 * columnsToUpdate array and returns this.
 */
@@ -69,7 +72,7 @@ int * setGameBoardRow (int * gameBoard, int * rowArr, int row, int width, int * 
 	gameBoard += (row * width);
 
 	for (i = 0; i < width; ++i)
-		if (gameBoard[i] == 0 && rowArr[i] != gameBoard[i])
+		if (gameBoard[i] == -1 && rowArr[i] != gameBoard[i])
 		{
 			gameBoard[i] = rowArr[i];
 			columnsToUpdate[i] = 1;
@@ -80,7 +83,7 @@ int * setGameBoardRow (int * gameBoard, int * rowArr, int row, int width, int * 
 
 /*
 * Iterates through each element in the specified column of the game board and if the element is
-* unsolved (equals zero) then will update it if it differs from the matching element in columnArr.
+* unsolved (equals -1) then will update it if it differs from the matching element in columnArr.
 * columnArr is the updated partial solution for that column. Tracks which elements are updated in the
 * rowsToUpdate array and returns this.
 */
@@ -91,7 +94,7 @@ int * setGameBoardColumn (int * gameBoard, int * columnArr, int column, int leng
 	for (i = 0; i < length; ++i)
 	{
 		index = (i * width) + column;
-		if (gameBoard[index] == 0 && columnArr[i] != gameBoard[index])
+		if (gameBoard[index] == -1 && columnArr[i] != gameBoard[index])
 		{
 			gameBoard[index] = columnArr[i];
 			rowsToUpdate[i] = 1;
@@ -102,8 +105,8 @@ int * setGameBoardColumn (int * gameBoard, int * columnArr, int column, int leng
 }
 
 /* 
-* Iterates through every element of the game board and as soon as a zero
-* stops and returns false. If no zero is found the game board is solved.
+* Iterates through every element of the game board and as soon as a -1
+* stops and returns false. If no -1 is found the game board is solved.
 */
 bool isSolved (int * gameBoard, int width, int length)
 {
@@ -111,7 +114,7 @@ bool isSolved (int * gameBoard, int width, int length)
 	int i;
 
 	for (i = 0; i < width * length; ++i)
-		if (gameBoard[i] == 0)
+		if (gameBoard[i] == -1)
 		{
 			solved = FALSE;
 			break;

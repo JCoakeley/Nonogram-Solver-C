@@ -4,6 +4,12 @@
 #include <string.h>
 
 /*
+* TODO: Add functions for retrieving current solved state of a row or column.
+* May directly update a line struct's mask and partial bits from the gameboard
+* instead of create an interim array.
+*/
+
+/*
 * Creates a gameboard of the specified width and length in contiguous
 * memory. Also sets each element to -1 because elements that are not -1
 * will not be updated in the update function. Pointer to the integer
@@ -61,6 +67,9 @@ void printGameBoard (int * gameBoard, int width, int length)
 }
 
 /*
+* TODO: Update row directly from a line struct's mask and partial bits, will not
+* be converting to an array in between.
+* 
 * Iterates through each element in the specified row of the game board and if the element is
 * unsolved (equals -1) then will update it if it differs from the matching element in rowArr.
 * rowArr is the updated partial solution for that row. Tracks which elements are updated in the
@@ -82,6 +91,9 @@ int * setGameBoardRow (int * gameBoard, int * rowArr, int row, int width, int * 
 }
 
 /*
+* TODO: Update column directly from a line struct's mask and partial bits, will not
+* be converting to an array in between.
+*
 * Iterates through each element in the specified column of the game board and if the element is
 * unsolved (equals -1) then will update it if it differs from the matching element in columnArr.
 * columnArr is the updated partial solution for that column. Tracks which elements are updated in the

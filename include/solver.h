@@ -14,6 +14,16 @@ typedef struct Line {
 	uint64_t maskBits;
 } Line;
 
+Line * createLine (LineClue *, int, int);
+
 void updateBitMasks(Line *, const int *);
+
+void filterPermutations (Line *);
+
+void generateConsistantPattern (Line *);
+
+int minRequiredLength (Line *);
+
+void overlap (Line *);
 
 #endif

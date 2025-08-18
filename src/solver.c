@@ -10,12 +10,8 @@
 */
 Line * createLine (LineClue * clues, int size, int lineId)
 {
-	Line * line;
-	printf("test\n");
-	
-	line = (Line *)malloc(sizeof(Line));
+	Line * line = (Line *)malloc(sizeof(Line));
 
-	printf("test3\n");
 	if (line == NULL) return line;
 
 	line->size 				= size;

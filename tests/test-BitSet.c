@@ -8,7 +8,6 @@ int test_newBitSet ()
 	int returnValue = 0;
 	BitSet * testBitSet = newBitSet(63);
 
-	printf("test1\n");
 	if (testBitSet->wordCount != 1)
 	{
 		++returnValue;
@@ -22,8 +21,6 @@ int test_newBitSet ()
 	}
 
 	testBitSet = newBitSet(65535);
-
-	printf("test2\n");
 	
 	if (testBitSet->wordCount != 1024)
 	{

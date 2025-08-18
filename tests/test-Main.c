@@ -13,14 +13,17 @@ int main (void)
 
 	totalFailures += failures;
 	failures = test_createLine();
+	failures += test_updateBitMask();
+	failures += test_minRequiredLength();
+	failures += test_overlap();
 
 	if (failures == 0) printf("All Solver tests passed!\n");
 	totalFailures += failures;
 
 
-	if (totalFailures == 0) printf ("All tests passed!\n");
+	if (totalFailures == 0) printf ("\nAll Tests Passed!\n");
 
-	else printf("%d tests failed.\n", totalFailures);
+	else printf("\n%d Tests Failed.\n", totalFailures);
 
 	return totalFailures;
 }

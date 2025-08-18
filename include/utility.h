@@ -8,8 +8,8 @@ typedef unsigned char bool;
 typedef unsigned char byte;
 
 typedef struct LineClue {
-	byte * clues;
-	byte clueCount;
+	int * clues;
+	int clueCount;
 } LineClue;
 
 LineClue * createLineClueSet (int *, int);

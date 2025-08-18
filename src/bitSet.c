@@ -36,11 +36,14 @@ BitSet * newBitSet (int bitCount)
 */
 void setAllBits (BitSet * bitSet)
 {
-	int unsetCount = (bitSet->wordCount << 6) - bitSet->bitCount;
+	int unsetCount = bitSet->bitCount & 63;
 	
-	memset(bitSet->words, 1, bitSet->bitCount);
+	memset(bitSet->words, 0xFF, bitSet->wordCount * sizeof(uint64_t));
 
-	if (unsetCount > 0) memset(bitSet->words + bitSet->bitCount, 0, unsetCount);
+	/* Clearing the bits of the last word that are past the bitCount of the bitSet */
+	if (unsetCount > 0)
+		bitSet->words[bitSet->wordCount - 1] &= (1ULL << unsetCount) - 1;
+
 	return;
 }
 

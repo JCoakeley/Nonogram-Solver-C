@@ -18,7 +18,7 @@ LineClue * createLineClueSet(int * clueBuffer, int clueCount)
 
 	/* Initializing struct data elements */
 	lineClueSet->clueCount = clueCount;
-	lineClueSet->clues = (byte *)malloc(sizeof(byte) * clueCount);
+	lineClueSet->clues = (int *)malloc(sizeof(int) * clueCount);
 
 	if (lineClueSet->clues == NULL)
 	{

@@ -1,5 +1,6 @@
 #include "../include/solver.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 /*
 * Creates a new line and populates each of it data elements. Size, clues and
@@ -9,8 +10,12 @@
 */
 Line * createLine (LineClue * clues, int size, int lineId)
 {
-	Line * line = (Line *)malloc(sizeof(Line));
+	Line * line;
+	printf("test\n");
+	
+	line = (Line *)malloc(sizeof(Line));
 
+	printf("test3\n");
 	if (line == NULL) return line;
 
 	line->size 				= size;
@@ -83,12 +88,12 @@ void filterPermutations (Line * line)
 void generateConsistentPattern (Line * line)
 {
 	int i;
-	BitSet * const bSet	= line->bitSet;
-	uint64_t * const perms = line->permutations;
-	uint64_t widthMask = (1ULL << line->size) - 1ULL;
-	uint64_t andMask = widthMask;
-	uint64_t orMask = 0ULL;
-	uint64_t unsolved = ~(line->maskBits) & widthMask;
+	BitSet * const bSet		= line->bitSet;
+	uint64_t * const perms 	= line->permutations;
+	uint64_t widthMask 		= (1ULL << line->size) - 1ULL;
+	uint64_t andMask 		= widthMask;
+	uint64_t orMask 		= 0ULL;
+	uint64_t unsolved 		= ~(line->maskBits) & widthMask;
 	uint64_t solved1s, solved0s;
 
 	for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
@@ -137,7 +142,7 @@ void overlap (Line * line)
 	int i, j, leftEnd, rightStart;
 	int leftPos = 0;
 	int rightPos = line->size - minRequiredLength(line);
-	byte * clues = line->clues->clues;
+	int * clues = line->clues->clues;
 
 	for (i = 0; i < line->clues->clueCount; ++i)
 	{

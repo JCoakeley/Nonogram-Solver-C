@@ -1,59 +1,40 @@
+#include "test-BitSet.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/bitSet.h"
-
-int test_newBitSet ();
-
-int test_setAllBits ();
-
-int main (void)
-{
-	int failures = 0;
-
-	failures += test_newBitSet();
-
-	if (failures == 0) 
-	{
-        printf("All tests passed!\n");
-        return 0;
-    } 
-
-    else 
-    {
-        printf("%d tests failed.\n", failures);
-        return 1;
-    }
-}
 
 int test_newBitSet ()
 {
 	int returnValue = 0;
 	BitSet * testBitSet = newBitSet(63);
 
+	printf("test1\n");
 	if (testBitSet->wordCount != 1)
 	{
-		returnValue = 1;
-		printf("test_newBitSet: 1: wordCount failure\n");
+		++returnValue;
+		printf("Test Failure: test_newBitSet #1: Expected: 1, Actual: %d\n", testBitSet->wordCount);
 	}
 		
 	if (testBitSet->bitCount != 63)
 	{
-		returnValue = 1;
-		printf("test_newBitSet: 1: bitCount failure\n");
+		++returnValue;
+		printf("Test Failure: test_newBitSet #1: Expected: 63, Actual: %d\n", testBitSet->bitCount);
 	}
 
 	testBitSet = newBitSet(65535);
 
+	printf("test2\n");
+	
 	if (testBitSet->wordCount != 1024)
 	{
-		returnValue = 1;
-		printf("test_newBitSet: 2: wordCount failure, %d\n", testBitSet->wordCount);
+		++returnValue;
+		printf("Test Failure: test_newBitSet #1: Expected: 1024, Actual: %d\n", testBitSet->wordCount);
 	}
 		
 	if (testBitSet->bitCount != 65535)
 	{
-		returnValue = 1;
-		printf("test_newBitSet: 2: bitCount failure\n");
+		++returnValue;
+		printf("Test Failure: test_newBitSet #1: Expected: 65535, Actual: %d\n", testBitSet->bitCount);
 	}
 
 	return returnValue;
@@ -70,8 +51,8 @@ int test_setAllBits ()
 
 	if (testWord != compareWord)
 	{
-		returnValue = 1;
-		printf("test_setAllBits: 1: failure\n");
+		++returnValue;
+		printf("Test Failure: test_setAllBits #1: No match\n");
 	}
 
 	return returnValue;

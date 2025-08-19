@@ -22,7 +22,7 @@ int * createGameBoard (int width, int length)
 		fprintf(stderr, "Error allocating memory for the gameboard\n");
 
 	else
-		memset(gameBoard, -1, width * length);
+		memset(gameBoard, 0xFF, sizeof(int) * width * length);
 	
 	return gameBoard;
 }

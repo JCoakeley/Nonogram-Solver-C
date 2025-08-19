@@ -5,7 +5,6 @@
 #define FALSE 0
 
 typedef unsigned char bool;
-typedef unsigned char byte;
 
 typedef struct LineClue {
 	int * clues;

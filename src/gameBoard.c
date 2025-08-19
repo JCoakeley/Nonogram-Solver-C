@@ -66,54 +66,69 @@ void printGameBoard (int * gameBoard, int width, int length)
 	return;
 }
 
-/*
-* TODO: Update row directly from a line struct's mask and partial bits, will not
-* be converting to an array in between.
-* 
-* Iterates through each element in the specified row of the game board and if the element is
-* unsolved (equals -1) then will update it if it differs from the matching element in rowArr.
-* rowArr is the updated partial solution for that row. Tracks which elements are updated in the
-* columnsToUpdate array and returns this.
+/* 
+* Iterates through each element in the specified row of the game board and if the corresponding
+* mask bit is set and the element is unsolved (equals -1) then will update it based on if the
+* corresponding partial bit is set or not. Tracks which elements are updated in the
+* columnsToUpdate array.
 */
-int * setGameBoardRow (int * gameBoard, int * rowArr, int row, int width, int * columnsToUpdate)
+void setGameBoardRow (int * gameBoard, Line * line, int * columnsToUpdate)
 {
 	int i;
-	gameBoard += (row * width);
+	const int width = line->size;
+	const uint64_t maskBits = line->maskBits;
+	const uint64_t partialBits = line->partialBits;
+	uint64_t compareBit = 1ULL;
+	
+	gameBoard += line->lineId * width;
 
-	for (i = 0; i < width; ++i)
-		if (gameBoard[i] == -1 && rowArr[i] != gameBoard[i])
+	for (i = 0; i < width; ++i, compareBit <<= 1)
+		if ((compareBit & maskBits) != 0 && gameBoard[i] == -1)
 		{
-			gameBoard[i] = rowArr[i];
+			gameBoard[i] = ((compareBit & partialBits) == 0) ? 0 : 1;
 			columnsToUpdate[i] = 1;
 		}
 
-	return columnsToUpdate;
+	return;
+}
+
+/* 
+* Iterates through each element in the specified column of the game board and if the corresponding
+* mask bit is set and the element is unsolved (equals -1) then will update it based on if the
+* corresponding partial bit is set or not. Tracks which elements are updated in the
+* rowsToUpdate array.
+*/
+void setGameBoardColumn (int * gameBoard, Line * line, int width, int * rowsToUpdate)
+{
+	int i, index = line->lineId - width;
+	const int length = line->size;
+	const uint64_t maskBits = line->maskBits;
+	const uint64_t partialBits = line->partialBits;
+	uint64_t compareBit = 1ULL;
+
+	for (i = 0; i < length; ++i, compareBit <<= 1, index += width)
+		if ((compareBit & maskBits) != 0 && gameBoard[index] == -1)
+		{
+			gameBoard[index] = ((compareBit & partialBits) == 0) ? 0 : 1;
+			rowsToUpdate[i] = 1;
+		}
+
+	return;
 }
 
 /*
-* TODO: Update column directly from a line struct's mask and partial bits, will not
-* be converting to an array in between.
-*
-* Iterates through each element in the specified column of the game board and if the element is
-* unsolved (equals -1) then will update it if it differs from the matching element in columnArr.
-* columnArr is the updated partial solution for that column. Tracks which elements are updated in the
-* rowsToUpdate array and returns this.
+* TODO: May implement this more directly in updateBitMasks in solver.c.
+* 
+* Populates a column array for the specified column from the gameboard.
 */
-int * setGameBoardColumn (int * gameBoard, int * columnArr, int column, int length, int width, int * rowsToUpdate)
+void getGameBoardColumn (int * gameBoard, int * columnArr, int width, int length, int columnNum)
 {
-	int i, index = 0;
+	int i, index = columnNum;
 
-	for (i = 0; i < length; ++i)
-	{
-		index = (i * width) + column;
-		if (gameBoard[index] == -1 && columnArr[i] != gameBoard[index])
-		{
-			gameBoard[index] = columnArr[i];
-			rowsToUpdate[i] = 1;
-		}
-	}
+	for (i = 0; i < length; ++i, index +=width)
+		columnArr[i] = gameBoard[index];
 
-	return rowsToUpdate;
+	return;
 }
 
 /* 

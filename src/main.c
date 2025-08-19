@@ -1,7 +1,9 @@
+#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include "../include/utility.h"
 #include "../include/gameBoard.h"
 
@@ -11,7 +13,9 @@ LineClue ** readFile (FILE *, int *, int *);
 
 int main (int argc, char ** argv)
 {
-	int i, gameBoardWidth = 0, gameBoardLength = 0;
+	struct timespec endTime, startTime;
+	clock_gettime(CLOCK_MONOTONIC, &startTime);
+	int i, iterations = 0, gameBoardWidth = 0, gameBoardLength = 0;
 	FILE * fPtr = NULL;
 	LineClue ** lineClues = NULL;
 	Line ** lines = NULL;
@@ -54,6 +58,7 @@ int main (int argc, char ** argv)
 
 	while (!isSolved(gameBoard, gameBoardWidth, gameBoardLength))
 	{
+		++iterations;
 		for (i = 0; i < gameBoardLength; ++i)
 		{
 			updateBitMasks(lines[i], gameBoard + (i * gameBoardWidth));
@@ -73,6 +78,12 @@ int main (int argc, char ** argv)
 	}
 
 	printGameBoard(gameBoard, gameBoardWidth, gameBoardLength);
+
+	clock_gettime(CLOCK_MONOTONIC, &endTime);
+
+	long nanos = (endTime.tv_sec - startTime.tv_sec) * 1000000000L + (endTime.tv_nsec - startTime.tv_nsec);
+	
+	printf("Time: %ldns, Iterations: %d\n", nanos, iterations);
 
 	return EXIT_SUCCESS;
 }
@@ -176,9 +187,6 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 		return NULL;
 	}
 
-	/* Validating Function */
-	printf("Width: %d\nLength: %d\n", *width, *length);
-
 	lineClues = (LineClue **)malloc(sizeof(LineClue *) * (*width + *length));
 
 	if (lineClues == NULL)
@@ -235,12 +243,6 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 			fprintf(stderr,"Error allocating memory for clueSet on line: %d\n", fileLineNum);
 			return NULL;
 		}
-
-		/* Validating Function */
-		for (j = 0; j < lineClues[i]->clueCount; ++j)
-			printf("%d ", lineClues[i]->clues[j]);
-
-		printf("\n");
 	}
 	
 	return lineClues;

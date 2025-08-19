@@ -3,6 +3,8 @@
 
 int test_createLine (void);
 
+int test_generatePermutations (void);
+
 int test_updateBitMask (void);
 
 int test_filterPermutations (void);

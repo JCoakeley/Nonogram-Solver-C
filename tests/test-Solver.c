@@ -22,6 +22,26 @@ int test_createLine (void)
 	return returnValue;
 }
 
+int test_generatePermutations (void)
+{
+	int returnValue = 0;
+
+	int clues[] = {7};
+	LineClue lineclue = {(int *)&clues, 1};
+
+	Line * line = createLine (&lineclue, 10, 0);
+
+	generatePermutations(line, 0, 0ULL, 0, TRUE, &(line->permutationCount));
+
+	if (line->permutationCount != 4)
+	{
+		printf("Test Failure: test_generatePermutations #1: Expected: 4, Actual: %d\n", line->permutationCount);
+		++returnValue;
+	}
+	
+	return returnValue;
+}
+
 int test_updateBitMask (void)
 {
 	int returnValue = 0;

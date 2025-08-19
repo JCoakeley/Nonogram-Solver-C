@@ -4,8 +4,7 @@
 #include <string.h>
 
 /*
-* TODO: Add functions for retrieving current solved state of a row or column.
-* May directly update a line struct's mask and partial bits from the gameboard
+* TODO: May directly update a line struct's mask and partial bits from the gameboard
 * instead of create an interim array.
 */
 

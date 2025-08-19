@@ -18,12 +18,64 @@ Line * createLine (LineClue * clues, int size, int lineId)
 	line->lineId 			= lineId;
 	line->clues 			= clues;
 	line->permutationCount 	= 0;
+	line->storeCount		= 0;
 	line->maskBits 			= 0ULL;
 	line->partialBits 		= 0ULL;
 	line->bitSet 			= NULL;
 	line->permutations 		= NULL;
 
 	return line;
+}
+
+void generatePermutations (Line * line, int clueIndex, uint64_t current, int position, bool countOnly, int * permCount)
+{
+	int groupSize, maxStart, newPosition, start;
+	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
+
+	if (clueIndex >= line->clues->clueCount)
+	{
+		if (((current & line->maskBits) ^ line->partialBits) == 0)
+		{
+			if (countOnly)
+				(*permCount)++;
+
+			else
+				line->permutations[*(permCount)++] = current;
+		}
+
+		return;
+	}
+	
+	groupSize = line->clues->clues[clueIndex];
+	maxStart = line->size - totalRemainingLength(line, clueIndex);
+
+	for (start = position; start <= maxStart; ++start)
+	{
+		groupBits = ((1ULL <<groupSize) - 1) << start;
+		newBits = current | groupBits;
+
+		newPosition = start + groupSize + 1;
+
+		writtenBitsMask = (1ULL << newPosition) - 1;
+		compareMask = writtenBitsMask & line->maskBits;
+
+		if (((newBits & compareMask) ^ (line->partialBits)) != 0)
+			continue;
+
+		generatePermutations(line, clueIndex + 1, newBits, newPosition, countOnly, permCount);
+	}
+}
+
+int totalRemainingLength (Line * line, int clueIndex)
+{
+	int i, length = 0, size = line->clues->clueCount;
+
+	for (i = clueIndex; i < size; ++i)
+		length += line->clues->clues[i];
+
+	length += (size - clueIndex - 1);
+
+	return length;
 }
 
 /*

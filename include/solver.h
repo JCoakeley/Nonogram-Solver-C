@@ -6,6 +6,7 @@
 typedef struct Line {
 	int lineId;
 	int permutationCount;
+	int storeCount;
 	int size;
 	BitSet * bitSet;
 	LineClue * clues;
@@ -15,6 +16,10 @@ typedef struct Line {
 } Line;
 
 Line * createLine (LineClue *, int, int);
+
+void generatePermutations (Line *, int, uint64_t, int, bool, int *);
+
+int totalRemainingLength (Line *, int);
 
 void updateBitMasks(Line *, const int *);
 

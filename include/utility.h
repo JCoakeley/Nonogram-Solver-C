@@ -1,10 +1,9 @@
 #ifndef UTIL_H
 #define UTIL_H
+#include "../include/solver.h"
 
 #define TRUE 1
 #define FALSE 0
-
-typedef unsigned char bool;
 
 typedef struct LineClue {
 	int * clues;
@@ -12,5 +11,7 @@ typedef struct LineClue {
 } LineClue;
 
 LineClue * createLineClueSet (int *, int);
+
+void printLineDetails (Line *);
 
 #endif

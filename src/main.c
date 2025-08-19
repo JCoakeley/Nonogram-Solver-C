@@ -11,10 +11,12 @@ LineClue ** readFile (FILE *, int *, int *);
 
 int main (int argc, char ** argv)
 {
-	int gameBoardWidth = 0, gameBoardLength = 0;
+	int i, gameBoardWidth = 0, gameBoardLength = 0;
 	FILE * fPtr = NULL;
 	LineClue ** lineClues = NULL;
-	int * gameBoard = NULL;
+	Line ** lines = NULL;
+	int * gameBoard = NULL, * rowsToUpdate = NULL, * columnsToUpdate = NULL;
+	int * columnPartialSolution = NULL;
 
 	fPtr = getFile(argc, argv[1]);
 
@@ -22,8 +24,53 @@ int main (int argc, char ** argv)
 
 	if (lineClues == NULL) return EXIT_FAILURE;
 
+	rowsToUpdate = (int *)malloc(sizeof(int) * gameBoardLength);
+	columnsToUpdate = (int *)malloc(sizeof(int) * gameBoardWidth);
+	columnPartialSolution = (int *)malloc(sizeof(int) * gameBoardLength);
+
 	gameBoard = createGameBoard(gameBoardWidth, gameBoardLength);
 	if (gameBoard == NULL) return EXIT_FAILURE;
+
+	lines = (Line **)malloc(sizeof(Line *) * (gameBoardWidth + gameBoardLength));
+	if (lines == NULL) return EXIT_FAILURE;
+
+	for (i = 0; i < gameBoardLength; ++i)
+		lines[i] = createLine(lineClues[i], gameBoardWidth, i);
+
+	for ( ; i < gameBoardWidth + gameBoardLength; ++i)
+		lines[i] = createLine(lineClues[i], gameBoardLength, i);
+
+	for (i = 0; i < gameBoardWidth + gameBoardLength; ++i)
+		generatePermutations(lines[i], 0, 0ULL, 0, TRUE, &(lines[i]->permutationCount));
+
+	for (i = 0; i < gameBoardWidth + gameBoardLength; ++i)
+	{
+		lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * lines[i]->permutationCount);
+		lines[i]->bitSet = newBitSet(lines[i]->permutationCount);
+	}
+
+	for (i = 0; i < gameBoardWidth + gameBoardLength; ++i)
+		generatePermutations(lines[i], 0, 0ULL, 0, FALSE, &(lines[i]->storeCount));
+
+	while (!isSolved(gameBoard, gameBoardWidth, gameBoardLength))
+	{
+		for (i = 0; i < gameBoardLength; ++i)
+		{
+			updateBitMasks(lines[i], gameBoard + (i * gameBoardWidth));
+			filterPermutations(lines[i]);
+			generateConsistentPattern(lines[i]);
+			setGameBoardRow(gameBoard, lines[i], columnsToUpdate);
+		}
+		
+		for ( ; i < gameBoardWidth + gameBoardLength; ++i)
+		{
+			getGameBoardColumn(gameBoard, columnPartialSolution, gameBoardWidth, gameBoardLength, i - gameBoardLength);
+			updateBitMasks(lines[i], columnPartialSolution);
+			filterPermutations(lines[i]);
+			generateConsistentPattern(lines[i]);
+			setGameBoardColumn(gameBoard, lines[i], gameBoardWidth, rowsToUpdate);		
+		}
+	}
 
 	printGameBoard(gameBoard, gameBoardWidth, gameBoardLength);
 

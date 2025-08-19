@@ -26,18 +26,21 @@ int test_generatePermutations (void)
 {
 	int returnValue = 0;
 
-	int clues[] = {7};
-	LineClue lineclue = {(int *)&clues, 1};
+	int clues[] = {4, 3};
+	LineClue lineclue = {(int *)&clues, 2};
 
 	Line * line = createLine (&lineclue, 10, 0);
 
 	generatePermutations(line, 0, 0ULL, 0, TRUE, &(line->permutationCount));
 
-	if (line->permutationCount != 4)
+	if (line->permutationCount != 6)
 	{
 		printf("Test Failure: test_generatePermutations #1: Expected: 4, Actual: %d\n", line->permutationCount);
 		++returnValue;
 	}
+
+	line->permutations = (uint64_t *)malloc(sizeof(uint64_t) * line->permutationCount);
+	generatePermutations(line, 0, 0ULL, 0, FALSE, &(line->storeCount));
 	
 	return returnValue;
 }

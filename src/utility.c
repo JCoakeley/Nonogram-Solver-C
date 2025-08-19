@@ -1,5 +1,6 @@
 #include "../include/utility.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 /*
 * Takes in an array of integers that is a clueBuffer and a count of the number
@@ -31,4 +32,38 @@ LineClue * createLineClueSet(int * clueBuffer, int clueCount)
 		lineClueSet->clues[i] = clueBuffer[i];
 	
 	return lineClueSet;
+}
+
+void printLineDetails (Line * line)
+{
+	int i;
+	BitSet * bSet = line->bitSet;
+	LineClue * lClue = line->clueSet;
+	printf("Line %d:\n", line->lineId);
+	printf("   Perm Count: %d\n", line->permutationCount);
+	printf("   Store Count: %d\n", line->storeCount);
+	printf("   Size: %d\n", line->size);
+	printf("   MaskBits: %lX\n", line->maskBits);
+	printf("   PartialBits: %lX\n", line->partialBits);
+	printf("   Permutations:\n");
+
+	for (i = 0; i < line->storeCount; ++i)
+		printf("      %lX\n", line->permutations[i]);
+
+	printf("   BitSet:\n");
+	printf("      Word Count: %d\n", bSet->wordCount);
+	printf("      Bit Count: %d\n", bSet->bitCount);
+	printf("      Words:\n");
+
+	for (i = 0; i < bSet->wordCount; ++i)
+		printf("         %lX\n", bSet->words[i]);
+
+	printf("   Clues:\n");
+	printf("      Clue Count: %d\n", lClue->clueCount);
+	printf("      Clues:\n");
+
+	for (i = 0; i < lClue->clueCount; ++i)
+		printf("         %d\n", lClue->clues[i]);
+
+	return;
 }

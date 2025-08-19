@@ -1,4 +1,5 @@
 #include "../include/solver.h"
+#include "../include/utility.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -16,7 +17,7 @@ Line * createLine (LineClue * clues, int size, int lineId)
 
 	line->size 				= size;
 	line->lineId 			= lineId;
-	line->clues 			= clues;
+	line->clueSet 			= clues;
 	line->permutationCount 	= 0;
 	line->storeCount		= 0;
 	line->maskBits 			= 0ULL;
@@ -32,7 +33,7 @@ void generatePermutations (Line * line, int clueIndex, uint64_t current, int pos
 	int groupSize, maxStart, newPosition, start;
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
 
-	if (clueIndex >= line->clues->clueCount)
+	if (clueIndex >= line->clueSet->clueCount)
 	{
 		if (((current & line->maskBits) ^ line->partialBits) == 0)
 		{
@@ -40,23 +41,23 @@ void generatePermutations (Line * line, int clueIndex, uint64_t current, int pos
 				(*permCount)++;
 
 			else
-				line->permutations[*(permCount)++] = current;
+				line->permutations[(*permCount)++] = current;
 		}
 
 		return;
 	}
 	
-	groupSize = line->clues->clues[clueIndex];
+	groupSize = line->clueSet->clues[clueIndex];
 	maxStart = line->size - totalRemainingLength(line, clueIndex);
 
 	for (start = position; start <= maxStart; ++start)
 	{
-		groupBits = ((1ULL <<groupSize) - 1) << start;
+		groupBits = ((1ULL <<groupSize) - 1ULL) << start;
 		newBits = current | groupBits;
 
 		newPosition = start + groupSize + 1;
 
-		writtenBitsMask = (1ULL << newPosition) - 1;
+		writtenBitsMask = (1ULL << newPosition) - 1ULL;
 		compareMask = writtenBitsMask & line->maskBits;
 
 		if (((newBits & compareMask) ^ (line->partialBits)) != 0)
@@ -68,10 +69,10 @@ void generatePermutations (Line * line, int clueIndex, uint64_t current, int pos
 
 int totalRemainingLength (Line * line, int clueIndex)
 {
-	int i, length = 0, size = line->clues->clueCount;
+	int i, length = 0, size = line->clueSet->clueCount;
 
 	for (i = clueIndex; i < size; ++i)
-		length += line->clues->clues[i];
+		length += line->clueSet->clues[i];
 
 	length += (size - clueIndex - 1);
 
@@ -120,10 +121,13 @@ void filterPermutations (Line * line)
 	const uint64_t 	partial = line->partialBits;
 	BitSet * const 	bSet 	= line->bitSet;
 
-	for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
-		if (((perms[i] & mask) ^ partial) != 0)
-			clearBit(bSet, i);
-	
+	if (mask != 0)
+	{
+		for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
+			if (((perms[i] & mask) ^ partial) != 0)
+				clearBit(bSet, i);
+	}
+					
 	return;
 }
 
@@ -171,10 +175,10 @@ int minRequiredLength (Line * line)
 {
 	int i, total = 0;
 
-	for (i = 0; i < line->clues->clueCount; ++i)
-		total += line->clues->clues[i];
+	for (i = 0; i < line->clueSet->clueCount; ++i)
+		total += line->clueSet->clues[i];
 
-	total += line->clues->clueCount - 1;
+	total += line->clueSet->clueCount - 1;
 
 	return total;
 }
@@ -190,9 +194,9 @@ void overlap (Line * line)
 	int i, j, leftEnd, rightStart;
 	int leftPos = 0;
 	int rightPos = line->size - minRequiredLength(line);
-	int * clues = line->clues->clues;
+	int * clues = line->clueSet->clues;
 
-	for (i = 0; i < line->clues->clueCount; ++i)
+	for (i = 0; i < line->clueSet->clueCount; ++i)
 	{
 		leftEnd = leftPos + clues[i];
 		leftPos = leftEnd + 1;

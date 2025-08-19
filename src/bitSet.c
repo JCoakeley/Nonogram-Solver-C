@@ -1,6 +1,7 @@
 #include "../include/bitSet.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 /*
 * Creates a bitSet of the minimum size to accomodate the specified bit count.
@@ -25,6 +26,9 @@ BitSet * newBitSet (int bitCount)
 		free(bitSet);
 		bitSet = NULL;
 	}
+
+	else
+		setAllBits(bitSet);
 	
 	return bitSet;
 }

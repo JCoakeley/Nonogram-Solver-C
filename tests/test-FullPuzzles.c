@@ -1,0 +1,10 @@
+#include "test-FullPuzzles.h"
+
+#define TEST1 "testPuzzles/test-10x10.txt"
+#define TEST1_SOLUTION "testPuzzles/test-10x10-solution.txt"
+#define TEST2 "testPuzzles/test-20x20.txt"
+#define TEST2_SOLUTION "testPuzzles/test-20x20-solution.txt"
+#define TEST3 "testPuzzles/test-30x30.txt"
+#define TEST3_SOLUTION "testPuzzles/test-30x30-solution.txt"
+#define TEST4 "testPuzzles/test-50x50.txt"
+#define TEST4_SOLUTION "testPuzzles/test-50x50-solution.txt"

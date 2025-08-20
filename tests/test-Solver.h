@@ -3,7 +3,7 @@
 
 int test_createLine (void);
 
-int test_generatePermutations (void);
+int test_generatePermutations_counting (void);
 
 int test_updateBitMask (void);
 

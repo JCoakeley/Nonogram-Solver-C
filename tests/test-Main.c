@@ -9,6 +9,8 @@ int main (void)
 
 	failures += test_newBitSet();
 	failures += test_setAllBits();
+	failures += test_clearBit();
+	failures += test_nextSetBit();
 	if (failures == 0) printf("All BitSet tests passed!\n");
 
 	totalFailures += failures;
@@ -16,7 +18,7 @@ int main (void)
 	failures += test_updateBitMask();
 	failures += test_minRequiredLength();
 	failures += test_overlap();
-	failures += test_generatePermutations();
+	failures += test_generatePermutations_counting();
 
 	if (failures == 0) printf("All Solver tests passed!\n");
 	totalFailures += failures;

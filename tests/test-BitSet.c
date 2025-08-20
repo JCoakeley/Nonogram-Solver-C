@@ -43,7 +43,6 @@ int test_setAllBits ()
 	uint64_t  testWord, compareWord = (1ULL << 32) - 1;
 	BitSet * testBitSet = newBitSet(32);
 
-	setAllBits(testBitSet);
 	testWord = *(testBitSet->words);
 
 	if (testWord != compareWord)
@@ -51,6 +50,88 @@ int test_setAllBits ()
 		++returnValue;
 		printf("Test Failure: test_setAllBits #1: No match\n");
 	}
+
+	return returnValue;
+}
+
+int test_clearBit ()
+{
+	int returnValue = 0;
+
+	BitSet * testBitSet = newBitSet(10);
+
+	if (testBitSet->words[0] != 1023ULL)
+		returnValue = 1;
+
+	clearBit(testBitSet, 1);
+
+	if (testBitSet->words[0] != 1021ULL)
+		returnValue = 1;
+
+	clearBit(testBitSet, 1);
+	
+	if (testBitSet->words[0] != 1021ULL)
+		returnValue = 1;
+
+	clearBit(testBitSet, 3);
+		
+	if (testBitSet->words[0] != 1013ULL)
+		returnValue = 1;
+
+	clearBit(testBitSet, 7);
+		
+	if (testBitSet->words[0] != 885ULL)
+		returnValue = 1;
+
+	if (returnValue == 1)
+		printf("Test Failure: test_clearBit #1\n");
+
+	return returnValue;
+}
+
+int test_nextSetBit ()
+{
+	int setBit = 0, returnValue = 0;
+
+	BitSet * testBitSet = newBitSet(10);
+	clearBit(testBitSet, 1);
+	clearBit(testBitSet, 3);
+	clearBit(testBitSet, 7);
+	clearBit(testBitSet, 6);
+	clearBit(testBitSet, 9);
+
+	setBit = nextSetBit(testBitSet, setBit);
+
+	if (setBit != 0)
+		returnValue = 1;
+
+	setBit = nextSetBit(testBitSet, setBit + 1);
+	
+	if (setBit != 2)
+		returnValue = 1;
+
+	setBit = nextSetBit(testBitSet, setBit + 1);
+		
+	if (setBit != 4)
+		returnValue = 1;
+
+	setBit = nextSetBit(testBitSet, setBit + 1);
+			
+	if (setBit != 5)
+		returnValue = 1;
+
+	setBit = nextSetBit(testBitSet, setBit + 1);
+				
+	if (setBit != 8)
+		returnValue = 1;
+
+	setBit = nextSetBit(testBitSet, setBit + 1);
+						
+	if (setBit != -1)
+		returnValue = 1;
+
+	if (returnValue == -1)
+		printf("Test Failure: test_nextSetBit\n");	
 
 	return returnValue;
 }

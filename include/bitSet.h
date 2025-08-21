@@ -1,3 +1,6 @@
+#ifndef BITSET_H
+#define BITSET_H
+
 #include <stdint.h>
 
 typedef struct BitSet {
@@ -13,3 +16,5 @@ void setAllBits (BitSet *);
 void clearBit (BitSet *, int);
 
 int nextSetBit (BitSet *, int);
+
+#endif

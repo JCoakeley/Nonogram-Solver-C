@@ -1,21 +1,6 @@
 #ifndef SOLVER_H
 #define SOLVER_H
-#include <stdbool.h>
-#include "../include/bitSet.h"
-
-struct LineClue;
-
-typedef struct Line {
-	int lineId;
-	int permutationCount;
-	int storeCount;
-	int size;
-	BitSet * bitSet;
-	struct LineClue * clueSet;
-	uint64_t * permutations;
-	uint64_t partialBits;
-	uint64_t maskBits;
-} Line;
+#include "../include/utility.h"
 
 Line * createLine (struct LineClue *, int, int);
 

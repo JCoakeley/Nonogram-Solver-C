@@ -6,6 +6,7 @@
 #include <time.h>
 #include "../include/utility.h"
 #include "../include/gameBoard.h"
+#include "../include/solver.h"
 
 FILE * getFile (int, char *);
 
@@ -25,6 +26,8 @@ int main (int argc, char ** argv)
 	fPtr = getFile(argc, argv[1]);
 
 	lineClues = readFile(fPtr, &gameBoardWidth, &gameBoardLength);
+	fclose(fPtr);
+	fPtr = NULL;
 
 	if (lineClues == NULL) return EXIT_FAILURE;
 
@@ -170,7 +173,7 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 	
 	if (sscanf(fileLine, "%d %d %n", width, length, &numCharsRead) != 2)
 	{
-		fprintf(stderr,"Invalid contents on line %d: expected two integers (width length).\n", fileLineNum);
+		fprintf(stderr,"Invalid contents on line %d: expected two integers (width, length).\n", fileLineNum);
 		return NULL;
 	}
 

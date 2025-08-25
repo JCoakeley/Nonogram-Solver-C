@@ -1,5 +1,6 @@
 #ifndef GAMEBOARD_H
 #define GAMEBOARD_H
+
 #include "../include/utility.h"
 
 int * createGameBoard (int, int);

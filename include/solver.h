@@ -1,5 +1,6 @@
 #ifndef SOLVER_H
 #define SOLVER_H
+
 #include "../include/utility.h"
 
 Line * createLine (struct LineClue *, int, int);

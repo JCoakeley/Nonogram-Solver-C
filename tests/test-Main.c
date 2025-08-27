@@ -2,6 +2,7 @@
 #include "test-BitSet.h"
 #include "test-GameBoard.h"
 #include "test-Solver.h"
+#include "test-FullPuzzles.h"
 
 int main (void)
 {
@@ -11,9 +12,10 @@ int main (void)
 	failures += test_setAllBits();
 	failures += test_clearBit();
 	failures += test_nextSetBit();
-	if (failures == 0) printf("All BitSet tests passed!\n");
 
+	if (failures == 0) printf("All BitSet tests passed!\n");
 	totalFailures += failures;
+	
 	failures = test_createLine();
 	failures += test_updateBitMask();
 	failures += test_minRequiredLength();
@@ -23,6 +25,10 @@ int main (void)
 	if (failures == 0) printf("All Solver tests passed!\n");
 	totalFailures += failures;
 
+	failures = test_fullPuzzles();
+
+	if (failures == 0) printf("All Full Puzzle tests passed!\n");
+	totalFailures += failures;
 
 	if (totalFailures == 0) printf ("\nAll Tests Passed!\n");
 

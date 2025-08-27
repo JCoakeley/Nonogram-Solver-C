@@ -93,7 +93,7 @@ int nextSetBit (BitSet * bitSet, int startingBit)
 
 	/* Iterating through each word of the bitSet until one has a set
 		bit or all words are searched. */
-	while (wordNum <= bitSet->wordCount)
+	while (wordNum < bitSet->wordCount)
 	{
 		targetWord = bitSet->words[wordNum];
 

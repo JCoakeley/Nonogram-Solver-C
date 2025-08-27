@@ -1,19 +1,113 @@
 #include "test-FullPuzzles.h"
-#include <stdio.h>
 #include "../include/gameBoard.h"
+#include "../include/solverAPI.h"
 
-#define TEST1 "testPuzzles/test-10x10.txt"
-#define TEST1_SOLUTION "testPuzzles/test-10x10-solution.txt"
-#define TEST2 "testPuzzles/test-20x20.txt"
-#define TEST2_SOLUTION "testPuzzles/test-20x20-solution.txt"
-#define TEST3 "testPuzzles/test-30x30.txt"
-#define TEST3_SOLUTION "testPuzzles/test-30x30-solution.txt"
-#define TEST4 "testPuzzles/test-50x50.txt"
-#define TEST4_SOLUTION "testPuzzles/test-50x50-solution.txt"
+#define TEST1 "tests/testPuzzles/test-10x10.txt"
+#define TEST1_SOLUTION "tests/testPuzzles/test-10x10-solution.txt"
+#define TEST2 "tests/testPuzzles/test-20x20.txt"
+#define TEST2_SOLUTION "tests/testPuzzles/test-20x20-solution.txt"
+#define TEST3 "tests/testPuzzles/test-30x30.txt"
+#define TEST3_SOLUTION "tests/testPuzzles/test-30x30-solution.txt"
+#define TEST4 "tests/testPuzzles/test-50x50.txt"
+#define TEST4_SOLUTION "tests/testPuzzles/test-50x50-solution.txt"
 
-int testFullPuzzles ()
+int test_fullPuzzles ()
 {
-	int failures = 0;	
+	int failures = 0;
+
+	int * expectedSolution = NULL, * actualSolution = NULL, iterations, difference;
+
+	/* Test 1 10x10 Puzzle */
+	FILE * filePtr = fopen(TEST1, "r");
+
+	if (filePtr == NULL)
+		return -1;
+
+	actualSolution = solvePuzzle(filePtr, 1, &iterations);
+	fclose(filePtr);
+
+	filePtr = fopen(TEST1_SOLUTION, "r");
+	if (filePtr == NULL)
+		return -1;
+	
+	expectedSolution = generateSolutionGameBoard(filePtr, 10, 10);
+	difference = compareGameBoards(expectedSolution, actualSolution, 100);
+	fclose(filePtr);
+
+	if (difference != 0)
+	{
+		printf("Test Failure: test-FullPuzzles #1: 10x10\n");
+		++failures;
+	}
+
+	/* Test 2 20x20 Puzzle */
+	filePtr = fopen(TEST2, "r");
+
+	if (filePtr == NULL)
+		return -1;
+
+	actualSolution = solvePuzzle(filePtr, 1, &iterations);
+	fclose(filePtr);
+
+	filePtr = fopen(TEST2_SOLUTION, "r");
+	if (filePtr == NULL)
+		return -1;
+	
+	expectedSolution = generateSolutionGameBoard(filePtr, 20, 20);
+	difference = compareGameBoards(expectedSolution, actualSolution, 400);
+	fclose(filePtr);
+
+	if (difference != 0)
+	{
+		printf("Test Failure: test-FullPuzzles #2: 20x20\n");
+		++failures;
+	}
+
+	/* Test 3 30x30 Puzzle */
+	filePtr = fopen(TEST3, "r");
+
+	if (filePtr == NULL)
+		return -1;
+
+	actualSolution = solvePuzzle(filePtr, 1, &iterations);
+	fclose(filePtr);
+
+	filePtr = fopen(TEST3_SOLUTION, "r");
+	if (filePtr == NULL)
+		return -1;
+	
+	expectedSolution = generateSolutionGameBoard(filePtr, 30, 30);
+	difference = compareGameBoards(expectedSolution, actualSolution, 900);
+	fclose(filePtr);
+
+	if (difference != 0)
+	{
+		printf("Test Failure: test-FullPuzzles #3: 30x30\n");
+		++failures;
+	}
+
+	/* Test 4 50x50 Puzzle */
+	filePtr = fopen(TEST4, "r");
+
+	if (filePtr == NULL)
+		return -1;
+
+	actualSolution = solvePuzzle(filePtr, 1, &iterations);
+	fclose(filePtr);
+
+	filePtr = fopen(TEST4_SOLUTION, "r");
+	if (filePtr == NULL)
+		return -1;
+	
+	expectedSolution = generateSolutionGameBoard(filePtr, 50, 50);
+	difference = compareGameBoards(expectedSolution, actualSolution, 2500);
+	fclose(filePtr);
+
+	if (difference != 0)
+	{
+		printf("Test Failure: test-FullPuzzles #4: 50x50\n");
+		++failures;
+	}
 
 	return failures;
 }
@@ -36,9 +130,23 @@ int * generateSolutionGameBoard (FILE * filePtr, int width, int length)
 	}
 
 	/* Sanity check */
-
 	if (!isSolved(solutionGameBoard, width, length))
 		printf("Generating solution gameBoard failure.\n");
 
 	return solutionGameBoard;
+}
+
+int compareGameBoards (int * expected, int * actual, int size)
+{
+	int i, difference = 0;
+
+	for (i = 0; i < size; ++i)
+	{
+		difference += expected[i] - actual[i];
+
+		if (difference != 0)
+			break;
+	}
+
+	return difference;
 }

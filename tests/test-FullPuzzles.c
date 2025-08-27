@@ -1,4 +1,5 @@
 #include "test-FullPuzzles.h"
+#include <stdlib.h>
 #include "../include/gameBoard.h"
 #include "../include/solverAPI.h"
 
@@ -32,7 +33,15 @@ int test_fullPuzzles ()
 	
 	expectedSolution = generateSolutionGameBoard(filePtr, 10, 10);
 	difference = compareGameBoards(expectedSolution, actualSolution, 100);
+
+	free(expectedSolution);
+	expectedSolution = NULL;
+
+	free(actualSolution);
+	actualSolution = NULL;
+	
 	fclose(filePtr);
+	filePtr = NULL;
 
 	if (difference != 0)
 	{
@@ -55,7 +64,15 @@ int test_fullPuzzles ()
 	
 	expectedSolution = generateSolutionGameBoard(filePtr, 20, 20);
 	difference = compareGameBoards(expectedSolution, actualSolution, 400);
+
+	free(expectedSolution);
+	expectedSolution = NULL;
+
+	free(actualSolution);
+	actualSolution = NULL;
+	
 	fclose(filePtr);
+	filePtr = NULL;
 
 	if (difference != 0)
 	{
@@ -78,7 +95,15 @@ int test_fullPuzzles ()
 	
 	expectedSolution = generateSolutionGameBoard(filePtr, 30, 30);
 	difference = compareGameBoards(expectedSolution, actualSolution, 900);
+
+	free(expectedSolution);
+	expectedSolution = NULL;
+
+	free(actualSolution);
+	actualSolution = NULL;
+	
 	fclose(filePtr);
+	filePtr = NULL;
 
 	if (difference != 0)
 	{
@@ -101,7 +126,15 @@ int test_fullPuzzles ()
 	
 	expectedSolution = generateSolutionGameBoard(filePtr, 50, 50);
 	difference = compareGameBoards(expectedSolution, actualSolution, 2500);
+
+	free(expectedSolution);
+	expectedSolution = NULL;
+
+	free(actualSolution);
+	actualSolution = NULL;
+	
 	fclose(filePtr);
+	filePtr = NULL;
 
 	if (difference != 0)
 	{

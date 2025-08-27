@@ -18,6 +18,9 @@ int test_createLine (void)
 		printf("Test Failure: test_createLine #1\n");
 		++returnValue;
 	}
+
+	free(line);
+	line = NULL;
 	
 	return returnValue;
 }
@@ -64,6 +67,15 @@ int test_generatePermutations_counting (void)
 		printf("Test Failure: test_generatePermutations #3: Expected: 11628, Actual: %d\n", line3->permutationCount);
 		++returnValue;
 	}
+
+	free(line1);
+	line1 = NULL;
+
+	free(line2);
+	line2 = NULL;
+
+	free(line3);
+	line3 = NULL;
 	
 	return returnValue;
 }
@@ -95,6 +107,9 @@ int test_updateBitMask (void)
 		printf("Test Failure: test_updateBitMask #1: PartialBits no match\n");
 		++returnValue;
 	}
+
+	free(line);
+	line = NULL;
 
 	return returnValue;
 }
@@ -151,6 +166,15 @@ int test_minRequiredLength (void)
 		printf("Test Failure: test_minRequiredLength #3: Expected: 45, Actual: %d\n", length);
 		++returnValue;
 	}
+
+	free(line1);
+	line1 = NULL;
+
+	free(line2);
+	line2 = NULL;
+
+	free(line3);
+	line3 = NULL;
 
 	return returnValue;
 }
@@ -226,6 +250,15 @@ int test_overlap (void)
 		printf("Test Failure: test_overlap #3: PartialBits no match\n");
 		++returnValue;
 	}
+
+	free(line1);
+	line1 = NULL;
+
+	free(line2);
+	line2 = NULL;
+
+	free(line3);
+	line3 = NULL;
 
 	return returnValue;
 }

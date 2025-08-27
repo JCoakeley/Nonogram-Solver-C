@@ -20,6 +20,12 @@ int test_newBitSet ()
 		printf("Test Failure: test_newBitSet #1: Expected: 63, Actual: %d\n", testBitSet->bitCount);
 	}
 
+	free(testBitSet->words);
+	testBitSet->words = NULL;
+
+	free(testBitSet);
+	testBitSet = NULL;
+
 	testBitSet = newBitSet(65535);
 	
 	if (testBitSet->wordCount != 1024)
@@ -33,6 +39,12 @@ int test_newBitSet ()
 		++returnValue;
 		printf("Test Failure: test_newBitSet #1: Expected: 65535, Actual: %d\n", testBitSet->bitCount);
 	}
+	
+	free(testBitSet->words);
+	testBitSet->words = NULL;
+
+	free(testBitSet);
+	testBitSet = NULL;
 
 	return returnValue;
 }
@@ -50,6 +62,12 @@ int test_setAllBits ()
 		++returnValue;
 		printf("Test Failure: test_setAllBits #1: No match\n");
 	}
+
+	free(testBitSet->words);
+	testBitSet->words = NULL;
+
+	free(testBitSet);
+	testBitSet = NULL;
 
 	return returnValue;
 }
@@ -85,6 +103,12 @@ int test_clearBit ()
 
 	if (returnValue == 1)
 		printf("Test Failure: test_clearBit #1\n");
+
+	free(testBitSet->words);
+	testBitSet->words = NULL;
+
+	free(testBitSet);
+	testBitSet = NULL;
 
 	return returnValue;
 }
@@ -132,6 +156,12 @@ int test_nextSetBit ()
 
 	if (returnValue == -1)
 		printf("Test Failure: test_nextSetBit\n");	
+
+	free(testBitSet->words);
+	testBitSet->words = NULL;
+
+	free(testBitSet);
+	testBitSet = NULL;
 
 	return returnValue;
 }

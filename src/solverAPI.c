@@ -113,52 +113,52 @@ int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 	free(lineClues);
 	lineClues = NULL;
 
-	bitSet_Free:
-		if (i < width + length)
-		{
-			free(lines[i]->permutations);
-			lines[i]->permutations = NULL;
-		}
+bitSet_Free:
+	if (i < width + length)
+	{
+		free(lines[i]->permutations);
+		lines[i]->permutations = NULL;
+	}
 
-	permutation_Free:	
-		j = i - 1;
-		i = width + length;
-		for ( ; j >= 0; --j)
-		{
-			free(lines[j]->bitSet->words);
-			lines[j]->bitSet->words = NULL;
-			
-			free(lines[j]->bitSet);
-			lines[j]->bitSet = NULL;
-
-			free(lines[j]->permutations);
-			lines[j]->permutations = NULL;
-		}
-
-	createLine_Free:
-		for (i = i - 1; i >= 0 ; --i)
-		{
-			free(lines[i]);
-			lines[i] = NULL;
-		}
-
-		free(lines);
-		lines = NULL;
-	lines_Free:
-	
-	gameBoard_Free:
+permutation_Free:	
+	j = i - 1;
+	i = width + length;
+	for ( ; j >= 0; --j)
+	{
+		free(lines[j]->bitSet->words);
+		lines[j]->bitSet->words = NULL;
 		
-		free(columnPartialSolution);
-		columnPartialSolution = NULL;
-	partial_Free:
-		
-		free(columnsToUpdate);
-		columnsToUpdate = NULL;
-	column_Free:
+		free(lines[j]->bitSet);
+		lines[j]->bitSet = NULL;
+
+		free(lines[j]->permutations);
+		lines[j]->permutations = NULL;
+	}
+
+createLine_Free:
+	for (i = i - 1; i >= 0 ; --i)
+	{
+		free(lines[i]);
+		lines[i] = NULL;
+	}
+
+	free(lines);
+	lines = NULL;
+lines_Free:
+
+gameBoard_Free:
 	
-		free(rowsToUpdate);
-		rowsToUpdate = NULL;
-	row_Free:
+	free(columnPartialSolution);
+	columnPartialSolution = NULL;
+partial_Free:
+	
+	free(columnsToUpdate);
+	columnsToUpdate = NULL;
+column_Free:
+
+	free(rowsToUpdate);
+	rowsToUpdate = NULL;
+row_Free:
 		
 
 	return gameBoard;

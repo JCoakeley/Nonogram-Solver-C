@@ -118,7 +118,7 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 		if (!fgets(fileLine, sizeof(fileLine), fPtr))
 		{
 			fprintf(stderr,"Error: EOF unexpectedly reached after line: %d\n", fileLineNum);
-			return NULL;
+			goto free_Memory;
 		}
 		
 		++fileLineNum;
@@ -133,7 +133,7 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 			if (clueBuffer[j] < 1 || clueBuffer[j] > 50)
 			{
 				fprintf(stderr,"Invalid file contents line: %d, Expecting integers between 1 and 50.\n", fileLineNum);
-				return NULL;
+				goto free_Memory;
 			}
 
 			offset += numCharsRead;
@@ -145,12 +145,11 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 		/* Looping until the null terminator is reach or a non space character */
 		while (*rest != '\0' && isspace((unsigned char) *rest)) ++rest;
 
-		/* If the null terminator is not reached then an invalid character is in the line after the width
-			and length */
+		/* If the null terminator is not reached then an invalid character is in the line after the clues */
 		if (*rest != '\0')
 		{
 			fprintf(stderr,"Invalid contents on line %d: trailing characters after clues.\n", fileLineNum);
-			return NULL;
+			goto free_Memory;
 		}
 
 		lineClues[i] = createLineClueSet(clueBuffer, j);
@@ -158,9 +157,24 @@ LineClue ** readFile (FILE * fPtr, int * width, int * length)
 		if (lineClues[i] == NULL)
 		{
 			fprintf(stderr,"Error allocating memory for clueSet on line: %d\n", fileLineNum);
-			return NULL;
+			goto free_Memory;
 		}
 	}
 	
+	return lineClues;
+
+free_Memory:
+	for (i = i - 1; i >= 0; --i)
+	{
+		free(lineClues[i]->clues);
+		lineClues[i]->clues = NULL;
+
+		free(lineClues[i]);
+		lineClues[i] = NULL;
+	}
+
+	free(lineClues);
+	lineClues = NULL;	
+		
 	return lineClues;
 }

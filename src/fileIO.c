@@ -62,6 +62,8 @@ FILE * getFile (int argc, char * argv)
 /*
 * TODO: Add support for various delimiters, not just spaces.
 * 
+* TODO: Free malloc!!
+* 
 * Parses file line by line. First reading the width and length from the first line.
 * Then reading each row/column's clue set on each subsequent line storing these clues
 * in a buffer until the entire line is read. Handles reaching EOF early, unexpected

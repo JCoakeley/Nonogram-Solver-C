@@ -3,6 +3,8 @@
 #include <stdio.h>
 
 /*
+* TODO: Free malloc!!
+* 
 * Takes in an array of integers that is a clueBuffer and a count of the number
 * of integers in the buffer. Allocates the memory needed for a LineClue struct
 * and for the integer array referenced in the struct then adds all the integers

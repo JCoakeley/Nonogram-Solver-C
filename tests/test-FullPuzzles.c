@@ -114,8 +114,15 @@ int test_fullPuzzles ()
 
 int * generateSolutionGameBoard (FILE * filePtr, int width, int length)
 {
+	
 	int character, index = 0;
 	int * solutionGameBoard = createGameBoard (width, length);
+	
+	if (solutionGameBoard == NULL)
+	{
+		printf ("error\n");
+		return NULL;
+	}
 
 	while ((character = fgetc(filePtr)) != EOF)
 	{

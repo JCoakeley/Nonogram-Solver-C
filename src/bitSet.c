@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 /*
+*
 * Creates a bitSet of the minimum size to accomodate the specified bit count.
 * Will return a pointer to the created bit Set, will return NULL if there are
 * errors alocating memory, it is the responsibility of the calling function to

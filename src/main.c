@@ -15,10 +15,15 @@ int main (int argc, char ** argv)
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 	int iterations = 0;
 	FILE * fPtr = NULL;
+	int * gameBoard = NULL;
 
 	fPtr = getFile(argc, argv[1]);
 
-	solvePuzzle(fPtr, 0, &iterations);
+	gameBoard = solvePuzzle(fPtr, 0, &iterations);
+
+	free(gameBoard);
+	gameBoard = NULL;
+	
 	fclose(fPtr);
 	fPtr = NULL;
 

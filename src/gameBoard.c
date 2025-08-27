@@ -8,7 +8,7 @@
 * instead of create an interim array.
 */
 
-/*
+/* 
 * Creates a gameboard of the specified width and length in contiguous
 * memory. Also sets each element to -1 because elements that are not -1
 * will not be updated in the update function. Pointer to the integer

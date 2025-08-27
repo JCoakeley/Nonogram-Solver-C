@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/*
+/* 
 * Creates a new line and populates each of it data elements. Size, clues and
 * lineId are all passed in as arguments. PermCount, maskBits and partialBits
 * always start out at 0. Permutations will be added at generation time,

@@ -28,4 +28,6 @@ LineClue * createLineClueSet (int *, int);
 
 void printLineDetails (Line *);
 
+void printFormattedTime (long);
+
 #endif

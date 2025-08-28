@@ -58,6 +58,18 @@ int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 				goto createLine_Free;
 		}
 
+		for (i = 0; i < length; ++i)
+		{
+			overlap(lines[i]);
+			setGameBoardRow(gameBoard, lines[i], columnsToUpdate);
+		}
+
+		for ( ; i < width + length; ++i)
+		{
+			overlap(lines[i]);
+			setGameBoardColumn(gameBoard, lines[i], width, rowsToUpdate);
+		}
+
 		for (i = 0; i < width + length; ++i)
 			generatePermutations(lines[i], 0, 0ULL, 0, TRUE, &(lines[i]->permutationCount));
 

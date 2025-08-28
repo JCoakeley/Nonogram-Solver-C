@@ -69,3 +69,31 @@ void printLineDetails (Line * line)
 
 	return;
 }
+
+void printFormattedTime (long nano)
+{
+	double time = 0.0;
+	
+	if (nano > 1000000000)
+	{	
+		time = nano / 1000000000.0;
+		printf("Time: %.3fs, ", time);
+	}
+
+	else if (nano > 1000000)
+	{	
+		time = nano / 1000000.0;
+		printf("Time: %.3fms, ", time);
+	}
+
+	else if (nano > 1000)
+	{	
+		time = nano / 1000.0;
+		printf("Time: %.3fμs, ", time);
+	}
+
+	else
+		printf("Time: %ldns, ", nano);
+
+	return;
+}

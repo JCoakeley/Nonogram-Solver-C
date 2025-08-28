@@ -52,7 +52,7 @@ void generatePermutations (Line * line, int clueIndex, uint64_t current, int pos
 
 	for (start = position; start <= maxStart; ++start)
 	{
-		groupBits = ((1ULL <<groupSize) - 1ULL) << start;
+		groupBits = ((1ULL << groupSize) - 1ULL) << start;
 		newBits = current | groupBits;
 
 		newPosition = start + groupSize + 1;
@@ -60,7 +60,7 @@ void generatePermutations (Line * line, int clueIndex, uint64_t current, int pos
 		writtenBitsMask = (1ULL << newPosition) - 1ULL;
 		compareMask = writtenBitsMask & line->maskBits;
 
-		if (((newBits & compareMask) ^ (line->partialBits)) != 0)
+		if (((newBits & compareMask) ^ (line->partialBits & compareMask)) != 0)
 			continue;
 
 		generatePermutations(line, clueIndex + 1, newBits, newPosition, countOnly, permCount);

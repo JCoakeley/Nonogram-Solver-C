@@ -30,8 +30,9 @@ int main (int argc, char ** argv)
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 
 	long nanos = (endTime.tv_sec - startTime.tv_sec) * 1000000000L + (endTime.tv_nsec - startTime.tv_nsec);
-	
-	printf("Time: %ldns, Iterations: %d\n", nanos, iterations);
+
+	printFormattedTime(nanos);
+	printf("Iterations: %d\n", iterations);
 
 	return EXIT_SUCCESS;
 }

@@ -4,13 +4,14 @@
 #include <ctype.h>
 
 /*
-* TODO: Add a try again prompt instead of endlessly asking for a valid
-* file name until on is provided.
-* 
-* If no argument has been passed in when the program is run then asks the
-* user for a filename. Opens a file stream to the provided filename and returns
-* it. Will loop until a valid filename is provided.
-*/
+ * Opens an input file either from the command-line argument or via user input.
+ *
+ * - If a filename is not provided via command-line (argc == 1), prompts the user to enter one.
+ * - Continues prompting (currently in an infinite loop) until a valid file is opened.
+ * - Returns a FILE pointer opened in read mode.
+ *
+ * TODO: Replace infinite loop with an explicit "Try again?" prompt to allow graceful exit.
+ */
 FILE * getFile (int argc, char * argv)
 {
 	FILE * fPtr = NULL;
@@ -60,15 +61,24 @@ FILE * getFile (int argc, char * argv)
 }
 
 /*
-* TODO: Add support for various delimiters, not just spaces.
-* 
-* TODO: Free malloc!!
-* 
-* Parses file line by line. First reading the width and length from the first line.
-* Then reading each row/column's clue set on each subsequent line storing these clues
-* in a buffer until the entire line is read. Handles reaching EOF early, unexpected
-* characters, max 32 clues per line.
-*/
+ * Parses a puzzle file to extract the gameboard dimensions and clues.
+ *
+ * Expected file format:
+ * - First line: two integers (width height)
+ * - Next (width + height) lines: clues for each row and column, space-separated
+ *
+ * Parsing details:
+ * - Width and height must be integers with no trailing garbage.
+ * - Each clue line must contain only valid integers (1–50), separated by spaces.
+ * - Ignores trailing whitespace, but rejects any other trailing characters.
+ * - Maximum 32 clues per line.
+ *
+ * Returns:
+ * - A pointer to an array of LineClue pointers (rows first, then columns), or NULL on error.
+ * - On error, prints a detailed message and frees all allocated memory.
+ *
+ * TODO: Add support for alternative delimiters beyond space (e.g., tabs or commas).
+ */
 LineClue ** readFile (FILE * fPtr, int * width, int * length)
 {
 	char fileLine[256], * rest = NULL;

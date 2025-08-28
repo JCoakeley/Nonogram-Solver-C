@@ -3,15 +3,21 @@
 #include <stdio.h>
 
 /*
-* TODO: Free malloc!!
-* 
-* Takes in an array of integers that is a clueBuffer and a count of the number
-* of integers in the buffer. Allocates the memory needed for a LineClue struct
-* and for the integer array referenced in the struct then adds all the integers
-* from the buffer up to the specified amount and returns a pointer to the
-* created LineClue struct. Will return NULL if either memory allocation step
-* fail, it is the resposibility of the calling function to act on this error.
-*/
+ * Allocates and initializes a LineClue struct from the provided buffer of clue integers.
+ *
+ * Parameters:
+ * - clueBuffer : Pointer to an array of integers representing the clue sequence.
+ * - clueCount  : The number of integers to copy from the clueBuffer.
+ *
+ * Workflow:
+ * - Allocates memory for the LineClue struct.
+ * - Allocates memory for the internal clue array of size `clueCount`.
+ * - Copies all integers from clueBuffer into the newly allocated array.
+ *
+ * Return:
+ * - A pointer to a fully initialized LineClue struct on success.
+ * - NULL if either memory allocation fails. (Responsibility of caller to handle this.)
+ */
 LineClue * createLineClueSet(int * clueBuffer, int clueCount)
 {
 	int i;
@@ -36,6 +42,18 @@ LineClue * createLineClueSet(int * clueBuffer, int clueCount)
 	return lineClueSet;
 }
 
+/*
+ * Prints detailed debugging information about a single Line.
+ *
+ * Output includes:
+ * - Line ID, permutation and storage counts, line size
+ * - maskBits and partialBits as hex values
+ * - All stored permutations (hex)
+ * - Associated BitSet structure (word/bit counts and words)
+ * - ClueSet details (number of clues and individual clue values)
+ *
+ * Intended for debugging and inspecting the internal state of a Line after solving steps.
+ */
 void printLineDetails (Line * line)
 {
 	int i;
@@ -70,6 +88,20 @@ void printLineDetails (Line * line)
 	return;
 }
 
+/*
+ * Prints a formatted version of a time duration in nanoseconds.
+ *
+ * Depending on the size of the input, it prints:
+ * - seconds if > 1 second
+ * - milliseconds if > 1 millisecond
+ * - microseconds if > 1 microsecond
+ * - nanoseconds otherwise
+ *
+ * Printed format includes three decimal places and a trailing comma, e.g.:
+ *   "Time: 4.231ms, "
+ *
+ * Intended for performance timing output.
+ */
 void printFormattedTime (long nano)
 {
 	double time = 0.0;

@@ -7,8 +7,33 @@
 #include "../include/solver.h"
 
 /*
-* 
-*/
+ * Solves a Nonogram puzzle from a file input stream and returns the completed game board.
+ *
+ * Parameters:
+ * - filePtr     : FILE pointer to a valid puzzle input file.
+ * - mode        : 0 for printing and returning the solution, 1 for benchmarking only (no printing).
+ * - iterations  : Pointer to an integer that will be updated with the number of iterations required.
+ *
+ * Workflow:
+ * - Reads the puzzle dimensions and clues using readFile().
+ * - Allocates and initializes tracking arrays and the game board.
+ * - Creates Line structures for each row and column and applies initial overlap deduction.
+ * - Alternates solving rows and columns until the board is fully solved.
+ * - For each line, generates permutations only when needed and uses bitmasks to track filtered permutations.
+ * - Tracks and reuses consistent patterns to deduce newly solvable cells.
+ *
+ * Memory Handling:
+ * - Allocates memory progressively based on solving needs.
+ * - Includes multi-stage cleanup using `goto` and reverse deallocation for safe unwinding.
+ * - Frees all intermediate allocations and LineClue structures before returning the final game board.
+ *
+ * Return:
+ * - A pointer to a dynamically allocated, fully solved game board array (int *), or NULL on error.
+ *
+ * TODO:
+ * - Refactor memory cleanup to better match the actual flow and dependencies of allocations.
+ * - Consider breaking this function into smaller helpers for readability and maintenance.
+ */
 int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 {
 	int i, j = 0, width = 0, length = 0;
@@ -104,7 +129,9 @@ int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 			}
 
 			memset(rowsToUpdate, 0x00, sizeof(int) * length);
-			
+
+
+			/* TODO: update memory freeing since memory is allocated through the solve and not sequencially */
 			for ( ; i < width + length; ++i)
 			{
 				if (columnsToUpdate[i - length] == 1)

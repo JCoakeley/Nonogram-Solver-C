@@ -1,6 +1,7 @@
 #include "../include/solverAPI.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../include/fileIO.h"
 #include "../include/gameBoard.h"
 #include "../include/solver.h"
@@ -22,15 +23,15 @@ int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 		if (lineClues == NULL)
 			return NULL;
 
-		rowsToUpdate = (int *)malloc(sizeof(int) * length);
+		rowsToUpdate = (int *)calloc(length, sizeof(int));
 		if (rowsToUpdate == NULL)
 			goto row_Free;
 			
-		columnsToUpdate = (int *)malloc(sizeof(int) * width);
+		columnsToUpdate = (int *)calloc(width, sizeof(int));
 		if (columnsToUpdate == NULL)
 			goto column_Free;
 			
-		columnPartialSolution = (int *)malloc(sizeof(int) * length);
+		columnPartialSolution = (int *)calloc(length, sizeof(int));
 		if (columnPartialSolution == NULL)
 			goto partial_Free;
 
@@ -92,20 +93,30 @@ int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 			++(*iterations);
 			for (i = 0; i < length; ++i)
 			{
-				updateBitMasks(lines[i], gameBoard + (i * width));
-				filterPermutations(lines[i]);
-				generateConsistentPattern(lines[i]);
-				setGameBoardRow(gameBoard, lines[i], columnsToUpdate);
+				if (rowsToUpdate[i] == 1)
+				{
+					updateBitMasks(lines[i], gameBoard + (i * width));
+					filterPermutations(lines[i]);
+					generateConsistentPattern(lines[i]);
+					setGameBoardRow(gameBoard, lines[i], columnsToUpdate);
+				}
 			}
+
+			memset(rowsToUpdate, 0x00, sizeof(int) * length);
 			
 			for ( ; i < width + length; ++i)
 			{
-				getGameBoardColumn(gameBoard, columnPartialSolution, width, length, i - length);
-				updateBitMasks(lines[i], columnPartialSolution);
-				filterPermutations(lines[i]);
-				generateConsistentPattern(lines[i]);
-				setGameBoardColumn(gameBoard, lines[i], width, rowsToUpdate);		
+				if (columnsToUpdate[i - length] == 1)
+				{
+					getGameBoardColumn(gameBoard, columnPartialSolution, width, length, i - length);
+					updateBitMasks(lines[i], columnPartialSolution);
+					filterPermutations(lines[i]);
+					generateConsistentPattern(lines[i]);
+					setGameBoardColumn(gameBoard, lines[i], width, rowsToUpdate);
+				}		
 			}
+
+			memset(columnsToUpdate, 0x00, sizeof(int) * width);
 		}
 	}
 

@@ -71,23 +71,6 @@ int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 			setGameBoardColumn(gameBoard, lines[i], width, rowsToUpdate);
 		}
 
-		for (i = 0; i < width + length; ++i)
-			generatePermutations(lines[i], 0, 0ULL, 0, TRUE, &(lines[i]->permutationCount));
-
-		for (i = 0; i < width + length; ++i)
-		{
-			lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * lines[i]->permutationCount);
-			if (lines[i]->permutations == NULL)
-				goto permutation_Free;
-				
-			lines[i]->bitSet = newBitSet(lines[i]->permutationCount);
-			if (lines[i]->bitSet == NULL)
-				goto bitSet_Free;
-		}
-
-		for (i = 0; i < width + length; ++i)
-			generatePermutations(lines[i], 0, 0ULL, 0, FALSE, &(lines[i]->storeCount));
-
 		while (!isSolved(gameBoard, width, length))
 		{
 			++(*iterations);
@@ -96,7 +79,25 @@ int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 				if (rowsToUpdate[i] == 1)
 				{
 					updateBitMasks(lines[i], gameBoard + (i * width));
-					filterPermutations(lines[i]);
+
+					if (lines[i]->permutationCount == 0)
+					{
+						generatePermutations(lines[i], 0, 0ULL, 0, TRUE, &(lines[i]->permutationCount));
+
+						lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * lines[i]->permutationCount);
+						if (lines[i]->permutations == NULL)
+							goto permutation_Free;
+							
+						lines[i]->bitSet = newBitSet(lines[i]->permutationCount);
+						if (lines[i]->bitSet == NULL)
+							goto bitSet_Free;
+
+						generatePermutations(lines[i], 0, 0ULL, 0, FALSE, &(lines[i]->storeCount));
+					}
+
+					else
+						filterPermutations(lines[i]);
+					
 					generateConsistentPattern(lines[i]);
 					setGameBoardRow(gameBoard, lines[i], columnsToUpdate);
 				}
@@ -110,7 +111,25 @@ int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 				{
 					getGameBoardColumn(gameBoard, columnPartialSolution, width, length, i - length);
 					updateBitMasks(lines[i], columnPartialSolution);
-					filterPermutations(lines[i]);
+
+					if (lines[i]->permutationCount == 0)
+					{
+						generatePermutations(lines[i], 0, 0ULL, 0, TRUE, &(lines[i]->permutationCount));
+
+						lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * lines[i]->permutationCount);
+						if (lines[i]->permutations == NULL)
+							goto permutation_Free;
+							
+						lines[i]->bitSet = newBitSet(lines[i]->permutationCount);
+						if (lines[i]->bitSet == NULL)
+							goto bitSet_Free;
+
+						generatePermutations(lines[i], 0, 0ULL, 0, FALSE, &(lines[i]->storeCount));
+					}
+
+					else
+						filterPermutations(lines[i]);
+					
 					generateConsistentPattern(lines[i]);
 					setGameBoardColumn(gameBoard, lines[i], width, rowsToUpdate);
 				}		

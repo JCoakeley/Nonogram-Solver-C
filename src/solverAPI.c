@@ -4,7 +4,6 @@
 #include <string.h>
 #include "../include/fileIO.h"
 #include "../include/gameBoard.h"
-#include "../include/solver.h"
 
 /*
  * Solves a Nonogram puzzle from a file input stream and returns the completed game board.
@@ -36,199 +35,241 @@
  */
 int * solvePuzzle (FILE * filePtr, char mode, int * iterations)
 {
-	int i, j = 0, width = 0, length = 0;
-	LineClue ** lineClues = NULL;
-	Line ** lines = NULL;
-	int * gameBoard = NULL, * rowsToUpdate = NULL, * columnsToUpdate = NULL;
-	int * columnPartialSolution = NULL;
+	SolverContext solver;
+	int i, width = 0, length = 0;
+
+	solver.width = 0;
+	solver.length = 0;
+	solver.gameBoard = NULL;
+	solver.rowsToUpdate = NULL;
+	solver.columnsToUpdate = NULL;
+	solver.columnPartialSolution = NULL;
+	solver.lineClues = NULL;
+	solver.lines = NULL;
+	solver.stage = FREE_NONE;
 
 	if (mode == 0 || mode == 1)
 	{
-		lineClues = readFile(filePtr, &width, &length);
-		if (lineClues == NULL)
+		solver.lineClues = readFile(filePtr, &width, &length);
+		if (solver.lineClues == NULL)
 			return NULL;
 
-		rowsToUpdate = (int *)calloc(length, sizeof(int));
-		if (rowsToUpdate == NULL)
-			goto row_Free;
-			
-		columnsToUpdate = (int *)calloc(width, sizeof(int));
-		if (columnsToUpdate == NULL)
-			goto column_Free;
-			
-		columnPartialSolution = (int *)calloc(length, sizeof(int));
-		if (columnPartialSolution == NULL)
-			goto partial_Free;
+		solver.width = width;
+		solver.length = length;
 
-		gameBoard = createGameBoard(width, length);
-		if (gameBoard == NULL)
-			goto gameBoard_Free;
+		solver.rowsToUpdate = (int *)calloc(length, sizeof(int));
+		if (solver.rowsToUpdate == NULL)
+			goto free;
 
-		lines = (Line **)malloc(sizeof(Line *) * (width + length));
-		if (lines == NULL)
-			goto lines_Free;
+		solver.stage = FREE_ROWS;
+			
+		solver.columnsToUpdate = (int *)calloc(width, sizeof(int));
+		if (solver.columnsToUpdate == NULL)
+			goto free;
+
+		solver.stage = FREE_COLUMNS;
+			
+		solver.columnPartialSolution = (int *)calloc(length, sizeof(int));
+		if (solver.columnPartialSolution == NULL)
+			goto free;
+
+		solver.stage = FREE_COLUMN_PARTIAL;
+
+		solver.gameBoard = createGameBoard(width, length);
+		if (solver.gameBoard == NULL)
+			goto free;
+
+		solver.lines = (Line **)malloc(sizeof(Line *) * (width + length));
+		if (solver.lines == NULL)
+			goto free;
 
 		for (i = 0; i < length; ++i)
 		{
-			lines[i] = createLine(lineClues[i], width, i);
+			solver.lines[i] = createLine(solver.lineClues[i], width, i);
 
-			if (lines[i] == NULL)
-				goto createLine_Free;
+			if (solver.lines[i] == NULL)
+				goto free;
+
+			if (i == 0)
+				solver.stage = FREE_LINES;
 		}
 
 		for ( ; i < width + length; ++i)
 		{
-			lines[i] = createLine(lineClues[i], length, i);
+			solver.lines[i] = createLine(solver.lineClues[i], length, i);
 
-			if (lines[i] == NULL)
-				goto createLine_Free;
+			if (solver.lines[i] == NULL)
+				goto free;
 		}
 
 		for (i = 0; i < length; ++i)
 		{
-			overlap(lines[i]);
-			setGameBoardRow(gameBoard, lines[i], columnsToUpdate);
+			overlap(solver.lines[i]);
+			setGameBoardRow(solver.gameBoard, solver.lines[i], solver.columnsToUpdate);
 		}
 
 		for ( ; i < width + length; ++i)
 		{
-			overlap(lines[i]);
-			setGameBoardColumn(gameBoard, lines[i], width, rowsToUpdate);
+			overlap(solver.lines[i]);
+			setGameBoardColumn(solver.gameBoard, solver.lines[i], width, solver.rowsToUpdate);
 		}
 
-		while (!isSolved(gameBoard, width, length))
+		while (!isSolved(solver.gameBoard, width, length))
 		{
 			++(*iterations);
 			for (i = 0; i < length; ++i)
 			{
-				if (rowsToUpdate[i] == 1)
+				if (solver.rowsToUpdate[i] == 1)
 				{
-					updateBitMasks(lines[i], gameBoard + (i * width));
+					updateBitMasks(solver.lines[i], solver.gameBoard + (i * width));
 
-					if (lines[i]->permutationCount == 0)
+					if (solver.lines[i]->permutationCount == 0)
 					{
-						generatePermutations(lines[i], 0, 0ULL, 0, TRUE, &(lines[i]->permutationCount));
+						generatePermutations(solver.lines[i], 0, 0ULL, 0, TRUE, &(solver.lines[i]->permutationCount));
 
-						lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * lines[i]->permutationCount);
-						if (lines[i]->permutations == NULL)
-							goto permutation_Free;
+						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->permutationCount);
+						if (solver.lines[i]->permutations == NULL)
+							goto free;
+
+						solver.lines[i]->state = LINE_ALLOC_PERMS;
 							
-						lines[i]->bitSet = newBitSet(lines[i]->permutationCount);
-						if (lines[i]->bitSet == NULL)
-							goto bitSet_Free;
+						solver.lines[i]->bitSet = newBitSet(solver.lines[i]->permutationCount);
+						if (solver.lines[i]->bitSet == NULL)
+							goto free;
 
-						generatePermutations(lines[i], 0, 0ULL, 0, FALSE, &(lines[i]->storeCount));
+						solver.lines[i]->state = LINE_ALLOC_ALL;
+
+						generatePermutations(solver.lines[i], 0, 0ULL, 0, FALSE, &(solver.lines[i]->storeCount));
 					}
 
 					else
-						filterPermutations(lines[i]);
+						filterPermutations(solver.lines[i]);
 					
-					generateConsistentPattern(lines[i]);
-					setGameBoardRow(gameBoard, lines[i], columnsToUpdate);
+					generateConsistentPattern(solver.lines[i]);
+					setGameBoardRow(solver.gameBoard, solver.lines[i], solver.columnsToUpdate);
 				}
 			}
 
-			memset(rowsToUpdate, 0x00, sizeof(int) * length);
+			memset(solver.rowsToUpdate, 0x00, sizeof(int) * length);
 
 
 			/* TODO: update memory freeing since memory is allocated through the solve and not sequencially */
 			for ( ; i < width + length; ++i)
 			{
-				if (columnsToUpdate[i - length] == 1)
+				if (solver.columnsToUpdate[i - length] == 1)
 				{
-					getGameBoardColumn(gameBoard, columnPartialSolution, width, length, i - length);
-					updateBitMasks(lines[i], columnPartialSolution);
+					getGameBoardColumn(solver.gameBoard, solver.columnPartialSolution, width, length, i - length);
+					updateBitMasks(solver.lines[i], solver.columnPartialSolution);
 
-					if (lines[i]->permutationCount == 0)
+					if (solver.lines[i]->permutationCount == 0)
 					{
-						generatePermutations(lines[i], 0, 0ULL, 0, TRUE, &(lines[i]->permutationCount));
+						generatePermutations(solver.lines[i], 0, 0ULL, 0, TRUE, &(solver.lines[i]->permutationCount));
 
-						lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * lines[i]->permutationCount);
-						if (lines[i]->permutations == NULL)
-							goto permutation_Free;
+						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->permutationCount);
+						if (solver.lines[i]->permutations == NULL)
+							goto free;
+
+						solver.lines[i]->state = LINE_ALLOC_PERMS;
 							
-						lines[i]->bitSet = newBitSet(lines[i]->permutationCount);
-						if (lines[i]->bitSet == NULL)
-							goto bitSet_Free;
+						solver.lines[i]->bitSet = newBitSet(solver.lines[i]->permutationCount);
+						if (solver.lines[i]->bitSet == NULL)
+							goto free;
 
-						generatePermutations(lines[i], 0, 0ULL, 0, FALSE, &(lines[i]->storeCount));
+						solver.lines[i]->state = LINE_ALLOC_ALL;
+
+						generatePermutations(solver.lines[i], 0, 0ULL, 0, FALSE, &(solver.lines[i]->storeCount));
 					}
 
 					else
-						filterPermutations(lines[i]);
+						filterPermutations(solver.lines[i]);
 					
-					generateConsistentPattern(lines[i]);
-					setGameBoardColumn(gameBoard, lines[i], width, rowsToUpdate);
+					generateConsistentPattern(solver.lines[i]);
+					setGameBoardColumn(solver.gameBoard, solver.lines[i], width, solver.rowsToUpdate);
 				}		
 			}
 
-			memset(columnsToUpdate, 0x00, sizeof(int) * width);
+			memset(solver.columnsToUpdate, 0x00, sizeof(int) * width);
 		}
 	}
 
 	if (mode == 0)
-		printGameBoard(gameBoard, width, length);
+		printGameBoard(solver.gameBoard, width, length);
+
+free:
+	freeResources(&solver);
 	
-	for (i = 0; i < width + length; ++i)
-	{
-		free(lineClues[i]->clues);
-		lineClues[i]->clues = NULL;
-		lines[i]->clueSet->clues = NULL;
-		free(lineClues[i]);
-		lineClues[i] = NULL;
-		lines[i]->clueSet = NULL;
-	}
+	return solver.gameBoard;
+}
 
-	free(lineClues);
-	lineClues = NULL;
-
-bitSet_Free:
-	if (i < width + length)
-	{
-		free(lines[i]->permutations);
-		lines[i]->permutations = NULL;
-	}
-
-permutation_Free:	
-	j = i - 1;
-	i = width + length;
-	for ( ; j >= 0; --j)
-	{
-		free(lines[j]->bitSet->words);
-		lines[j]->bitSet->words = NULL;
-		
-		free(lines[j]->bitSet);
-		lines[j]->bitSet = NULL;
-
-		free(lines[j]->permutations);
-		lines[j]->permutations = NULL;
-	}
-
-createLine_Free:
-	for (i = i - 1; i >= 0 ; --i)
-	{
-		free(lines[i]);
-		lines[i] = NULL;
-	}
-
-	free(lines);
-	lines = NULL;
-lines_Free:
-
-gameBoard_Free:
+void freeResources (SolverContext * solver)
+{
+	int i, totalClues = solver->width + solver->length;
 	
-	free(columnPartialSolution);
-	columnPartialSolution = NULL;
-partial_Free:
+	switch (solver->stage)
+	{
+		case FREE_LINES:
+			for (i = 0; i < totalClues; ++i)
+			{
+				if (solver->lines[i] == NULL) break;
+
+				switch (solver->lines[i]->state)
+				{
+					case LINE_ALLOC_ALL:
+						free(solver->lines[i]->bitSet->words);						
+						free(solver->lines[i]->bitSet);
+						solver->lines[i]->bitSet = NULL;
+						/* Fall through */
+				
+					case LINE_ALLOC_PERMS:
+						free(solver->lines[i]->permutations);
+						solver->lines[i]->permutations = NULL;
+						/* Fall through */
+				
+					case LINE_ALLOC_NONE:
+						break;
+				}
+
+				free(solver->lines[i]);
+				solver->lines[i] = NULL;
+			}
+
+			free(solver->lines);
+			solver->lines = NULL;
+			/* Fall through */
 	
-	free(columnsToUpdate);
-	columnsToUpdate = NULL;
-column_Free:
+		case FREE_COLUMN_PARTIAL:
+			free(solver->columnPartialSolution);
+			solver->columnPartialSolution = NULL;
+			/* Fall through */
+	
+		case FREE_COLUMNS:
+			free(solver->columnsToUpdate);
+			solver->columnsToUpdate = NULL;
+			/* Fall through */
+	
+		case FREE_ROWS:
+			free(solver->rowsToUpdate);
+			solver->rowsToUpdate = NULL;
+			/* Fall through */
+	
+		case FREE_LINE_CLUES:
+			for (i = 0; i < totalClues; ++i)
+			{
+				if (solver->lineClues[i])
+				{
+					free(solver->lineClues[i]->clues);				
+					free(solver->lineClues[i]);
+					solver->lineClues[i] = NULL;
+				}
+			}
 
-	free(rowsToUpdate);
-	rowsToUpdate = NULL;
-row_Free:
-		
+			free(solver->lineClues);
+			solver->lineClues = NULL;
+			/* Fall through */
+	
+		case FREE_NONE:
+			break;
+	}
 
-	return gameBoard;
+	return;
 }

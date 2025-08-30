@@ -32,6 +32,7 @@ Line * createLine (LineClue * clues, int size, int lineId)
 	line->partialBits 		= 0ULL;
 	line->bitSet 			= NULL;
 	line->permutations 		= NULL;
+	line->state				= LINE_ALLOC_NONE;
 
 	return line;
 }

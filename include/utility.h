@@ -7,6 +7,12 @@
 #define TRUE 1
 #define FALSE 0
 
+typedef enum {
+	LINE_ALLOC_NONE,
+	LINE_ALLOC_PERMS,
+	LINE_ALLOC_ALL
+} LineAllocState;
+
 typedef struct LineClue {
 	int * clues;
 	int clueCount;
@@ -22,6 +28,7 @@ typedef struct Line {
 	uint64_t * permutations;
 	uint64_t partialBits;
 	uint64_t maskBits;
+	LineAllocState state;
 } Line;
 
 LineClue * createLineClueSet (int *, int);

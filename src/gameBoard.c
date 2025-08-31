@@ -1,7 +1,8 @@
 #include "../include/gameBoard.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
+#include "../include/utility.h"
 
 /*
  * TODO: May directly update a line struct's mask and partial bits from the gameboard
@@ -165,9 +166,9 @@ void getGameBoardColumn (int * gameBoard, int * columnArr, int width, int length
  * Returns TRUE if all cells are non-negative (i.e., no unsolved -1 cells remain),
  * otherwise returns FALSE.
  */
-bool isSolved (int * gameBoard, int width, int length)
+char isSolved (int * gameBoard, int width, int length)
 {
-	bool solved = TRUE;
+	char solved = TRUE;
 	int i;
 
 	for (i = 0; i < width * length; ++i)

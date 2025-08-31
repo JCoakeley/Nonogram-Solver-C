@@ -1,8 +1,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stdbool.h>
 #include "../include/bitSet.h"
+#include "../include/timing.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -34,6 +34,8 @@ typedef struct Line {
 LineClue * createLineClueSet (int *, int);
 
 void printLineDetails (Line *);
+
+void printTimingData (Timings *);
 
 void printFormattedTime (long);
 

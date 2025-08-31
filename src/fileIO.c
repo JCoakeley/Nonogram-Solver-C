@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "../include/utility.h"
 
 /*
  * Opens an input file either from the command-line argument or via user input.
@@ -16,7 +17,7 @@ FILE * getFile (int argc, char * argv)
 {
 	FILE * fPtr = NULL;
 	char fileName[256];
-	bool loop;
+	char loop;
 
 	do {
 		loop = FALSE;

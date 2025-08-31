@@ -2,10 +2,11 @@
 #define FILE_IO_H
 
 #include <stdio.h>
-#include "../include/utility.h"
+
+struct LineClue;
 
 FILE * getFile (int, char *);
 
-LineClue ** readFile (FILE *, int *, int *);
+struct LineClue ** readFile (FILE *, int *, int *);
 
 #endif

@@ -1,7 +1,6 @@
 #include "../include/bitSet.h"
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 /*
  * Creates and initializes a new BitSet with enough words to cover the given bit count.

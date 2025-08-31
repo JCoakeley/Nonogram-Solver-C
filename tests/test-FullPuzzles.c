@@ -16,7 +16,9 @@ int test_fullPuzzles ()
 {
 	int failures = 0;
 
-	int * expectedSolution = NULL, * actualSolution = NULL, iterations, difference;
+	int * expectedSolution = NULL, * actualSolution = NULL;
+	int iterations = 0, difference = 0, totalPermutations = 0;
+	Timings timings = {0};
 
 	/* Test 1 10x10 Puzzle */
 	FILE * filePtr = fopen(TEST1, "r");
@@ -24,7 +26,7 @@ int test_fullPuzzles ()
 	if (filePtr == NULL)
 		return -1;
 
-	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations);
+	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations, &totalPermutations, &timings);
 	fclose(filePtr);
 
 	filePtr = fopen(TEST1_SOLUTION, "r");
@@ -55,7 +57,7 @@ int test_fullPuzzles ()
 	if (filePtr == NULL)
 		return -1;
 
-	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations);
+	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations, &totalPermutations, &timings);
 	fclose(filePtr);
 
 	filePtr = fopen(TEST2_SOLUTION, "r");
@@ -86,7 +88,7 @@ int test_fullPuzzles ()
 	if (filePtr == NULL)
 		return -1;
 
-	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations);
+	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations, &totalPermutations, &timings);
 	fclose(filePtr);
 
 	filePtr = fopen(TEST3_SOLUTION, "r");
@@ -117,7 +119,7 @@ int test_fullPuzzles ()
 	if (filePtr == NULL)
 		return -1;
 
-	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations);
+	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations, &totalPermutations, &timings);
 	fclose(filePtr);
 
 	filePtr = fopen(TEST4_SOLUTION, "r");

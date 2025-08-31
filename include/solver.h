@@ -5,7 +5,7 @@
 
 Line * createLine (struct LineClue *, int, int);
 
-void generatePermutations (Line *, int, uint64_t, int, bool, int *);
+void generatePermutations (Line *, int, uint64_t, int, char, int *);
 
 int totalRemainingLength (Line *, int);
 

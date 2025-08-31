@@ -1,6 +1,7 @@
 #include "../include/utility.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include "../include/timing.h"
 
 /*
  * Allocates and initializes a LineClue struct from the provided buffer of clue integers.
@@ -88,6 +89,52 @@ void printLineDetails (Line * line)
 	return;
 }
 
+void printTimingData (Timings * timings)
+{
+	long totalNanos		= (timings->totalEnd.tv_sec - timings->totalStart.tv_sec) * 1000000000L 
+						+ (timings->totalEnd.tv_nsec - timings->totalStart.tv_nsec);
+	long fileNanos 		= (timings->fileEnd.tv_sec - timings->fileStart.tv_sec) * 1000000000L 
+						+ (timings->fileEnd.tv_nsec - timings->fileStart.tv_nsec);
+	long initNanos 		= (timings->initEnd.tv_sec - timings->initStart.tv_sec) * 1000000000L 
+						+ (timings->initEnd.tv_nsec - timings->initStart.tv_nsec);
+	long solvingNanos 	= (timings->solvingEnd.tv_sec - timings->solvingStart.tv_sec) * 1000000000L 
+						+ (timings->solvingEnd.tv_nsec - timings->solvingStart.tv_nsec);
+	long overlapNanos 	= (timings->overlapEnd.tv_sec - timings->overlapStart.tv_sec) * 1000000000L 
+						+ (timings->overlapEnd.tv_nsec - timings->overlapStart.tv_nsec);
+	long countingNanos 	= (timings->countEnd.tv_sec - timings->countStart.tv_sec) * 1000000000L 
+						+ (timings->countEnd.tv_nsec - timings->countStart.tv_nsec);
+	long generateNanos 	= (timings->generationEnd.tv_sec - timings->generationStart.tv_sec) * 1000000000L 
+						+ (timings->generationEnd.tv_nsec - timings->generationStart.tv_nsec);
+	long filteringNanos = (timings->filteringEnd.tv_sec - timings->filteringStart.tv_sec) * 1000000000L 
+						+ (timings->filteringEnd.tv_nsec - timings->filteringStart.tv_nsec);
+	long commonNanos 	= (timings->commonEnd.tv_sec - timings->commonStart.tv_sec) * 1000000000L 
+						+ (timings->commonEnd.tv_nsec - timings->commonStart.tv_nsec);
+	
+	printf("Total Time: ");
+	printFormattedTime(totalNanos);
+	
+	printf("\n\nFile Reading: ");
+	printFormattedTime(fileNanos);
+	printf("\nInitialization: ");
+	printFormattedTime(initNanos);
+	printf("\nOverlap: ");
+	printFormattedTime(overlapNanos);
+	printf("\nSolving Loop: ");
+	printFormattedTime(solvingNanos);
+	
+	printf("\n\nCounting Permutations: ");
+	printFormattedTime(countingNanos);
+	printf("\nGenerating Permutations: ");
+	printFormattedTime(generateNanos);
+	printf("\nFiltering: ");
+	printFormattedTime(filteringNanos);
+	printf("\nGenerating Consistent Pattern: ");
+	printFormattedTime(commonNanos);
+	printf("\n");
+
+	return;
+}
+
 /*
  * Prints a formatted version of a time duration in nanoseconds.
  *
@@ -97,8 +144,8 @@ void printLineDetails (Line * line)
  * - microseconds if > 1 microsecond
  * - nanoseconds otherwise
  *
- * Printed format includes three decimal places and a trailing comma, e.g.:
- *   "Time: 4.231ms, "
+ * Printed format includes three decimal places, e.g.:
+ *   "4.231ms"
  *
  * Intended for performance timing output.
  */
@@ -109,23 +156,23 @@ void printFormattedTime (long nano)
 	if (nano > 1000000000)
 	{	
 		time = nano / 1000000000.0;
-		printf("Time: %.3fs, ", time);
+		printf("%.3fs", time);
 	}
 
 	else if (nano > 1000000)
 	{	
 		time = nano / 1000000.0;
-		printf("Time: %.3fms, ", time);
+		printf("%.3fms", time);
 	}
 
 	else if (nano > 1000)
 	{	
 		time = nano / 1000.0;
-		printf("Time: %.3fμs, ", time);
+		printf("%.3fμs", time);
 	}
 
 	else
-		printf("Time: %ldns, ", nano);
+		printf("%ldns", nano);
 
 	return;
 }

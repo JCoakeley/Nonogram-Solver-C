@@ -1,8 +1,8 @@
 #ifndef SOLVER_API_H
 #define SOLVER_API_H
 
-#include <stdio.h>
 #include "../include/solver.h"
+#include "../include/fileIO.h"
 
 typedef enum {
 	MODE_STANDARD,
@@ -30,9 +30,9 @@ typedef struct {
 	CleanupStage stage;
 } SolverContext;
 
-int * solvePuzzle (FILE *, SolvingMode, int *);
+int * solvePuzzle (FILE *, SolvingMode, int *, int *, Timings *);
 
-bool puzzleSetup (FILE *, SolverContext *);
+char puzzleSetup (FILE *, SolverContext *, Timings *);
 
 void freeResources (SolverContext *);
 

@@ -1,8 +1,6 @@
 #include "../include/solverAPI.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/fileIO.h"
 #include "../include/gameBoard.h"
 
 /*
@@ -31,7 +29,7 @@
  *
  * Caller is responsible for freeing the returned game board.
  */
-int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations)
+int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * totalPermutations, Timings * timings)
 {
 	/* Zero-initialize all context fields */
 	SolverContext solver = {0};
@@ -43,11 +41,14 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations)
 	do
 	{
 		/* Initialize puzzle data structures and directly frees memory if an allocation error occurs */
-		if (!puzzleSetup(filePtr, &solver))
+		if (!puzzleSetup(filePtr, &solver, timings))
 			goto free;
 			
 		width = solver.width;
 		length = solver.length;
+
+		timingEnd(timings, INIT);
+		timingStart(timings, OVERLAP);
 		
 		for (i = 0; i < length; ++i)
 		{
@@ -60,6 +61,9 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations)
 			overlap(solver.lines[i]);
 			setGameBoardColumn(solver.gameBoard, solver.lines[i], width, solver.rowsToUpdate);
 		}
+
+		timingEnd(timings, OVERLAP);
+		timingStart(timings, SOLVING);
 
 		/* Repeat solving pass until the gameBoard is completely solved */
 		while (!isSolved(solver.gameBoard, width, length))
@@ -77,9 +81,13 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations)
 					/* Count, allocate and store permutations if not done yet for the row */
 					if (solver.lines[i]->permutationCount == 0)
 					{
+						timingStart(timings, COUNTING);
 						/* Count permutations first to allocate exact size */
 						generatePermutations(solver.lines[i], 0, 0ULL, 0, TRUE, &(solver.lines[i]->permutationCount));
 
+						timingEnd(timings, COUNTING);
+						timingStart(timings, INIT);
+						
 						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->permutationCount);
 						if (solver.lines[i]->permutations == NULL)
 							goto free;
@@ -92,15 +100,28 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations)
 
 						solver.lines[i]->state = LINE_ALLOC_ALL;
 
+						timingEnd(timings, INIT);
+						timingStart(timings, GENERATION);
+
 						/* Actually generate and store the permutations */
 						generatePermutations(solver.lines[i], 0, 0ULL, 0, FALSE, &(solver.lines[i]->storeCount));
+
+						timingEnd(timings, GENERATION);
+						*totalPermutations += solver.lines[i]->storeCount;
 					}
 
 					/* Only filter if permutations were already generated */
 					else
+					{	
+						timingStart(timings, FILTERING);
 						filterPermutations(solver.lines[i]);
+						timingEnd(timings, FILTERING);
+					}
 					
+					timingStart(timings, COMMON);
 					generateConsistentPattern(solver.lines[i]);
+					timingEnd(timings, COMMON);
+					
 					setGameBoardRow(solver.gameBoard, solver.lines[i], solver.columnsToUpdate);
 				}
 			}
@@ -120,8 +141,12 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations)
 					/* Count, allocate and store permutations if not done yet for the column */
 					if (solver.lines[i]->permutationCount == 0)
 					{
+						timingStart(timings, COUNTING);
 						/* Count permutations first to allocate exact size */
 						generatePermutations(solver.lines[i], 0, 0ULL, 0, TRUE, &(solver.lines[i]->permutationCount));
+
+						timingEnd(timings, COUNTING);
+						timingStart(timings, INIT);
 
 						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->permutationCount);
 						if (solver.lines[i]->permutations == NULL)
@@ -135,15 +160,28 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations)
 
 						solver.lines[i]->state = LINE_ALLOC_ALL;
 
+						timingEnd(timings, INIT);
+						timingStart(timings, GENERATION);
+
 						/* Actually generate and store the permutations */
 						generatePermutations(solver.lines[i], 0, 0ULL, 0, FALSE, &(solver.lines[i]->storeCount));
+
+						timingEnd(timings, GENERATION);
+						*totalPermutations += solver.lines[i]->storeCount;
 					}
 
 					/* Only filter if permutations were already generated */
 					else
+					{	
+						timingStart(timings, FILTERING);
 						filterPermutations(solver.lines[i]);
-					
+						timingEnd(timings, FILTERING);
+					}
+
+					timingStart(timings, COMMON);
 					generateConsistentPattern(solver.lines[i]);
+					timingEnd(timings, COMMON);
+
 					setGameBoardColumn(solver.gameBoard, solver.lines[i], width, solver.rowsToUpdate);
 				}		
 			}
@@ -154,6 +192,8 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations)
 
 		rewind(filePtr);
 	} while (--loop > 0);
+
+	timingEnd(timings, SOLVING);
 
 	/* Only print gameBoard if not in test mode */
 	if (mode != MODE_TEST)
@@ -181,7 +221,7 @@ free:
  *   TRUE  if all allocations succeeded.
  *   FALSE if any allocation failed — caller must call freeResources().
  */
-bool puzzleSetup (FILE * filePtr, SolverContext * solver)
+char puzzleSetup (FILE * filePtr, SolverContext * solver, Timings * timings)
 {
 	int i, width = 0, length = 0;
 
@@ -200,6 +240,9 @@ bool puzzleSetup (FILE * filePtr, SolverContext * solver)
 	if (solver->lineClues == NULL)
 		return FALSE;	
 
+	timingEnd(timings, FILEREADING);
+	timingStart(timings, INIT);
+	
 	/* Allocate row update tracking */
 	solver->rowsToUpdate = (int *)calloc(length, sizeof(int));
 	if (solver->rowsToUpdate == NULL)

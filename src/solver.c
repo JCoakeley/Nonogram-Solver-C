@@ -1,7 +1,5 @@
 #include "../include/solver.h"
-#include "../include/utility.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 /*
  * Creates and initializes a new Line struct.
@@ -51,7 +49,7 @@ Line * createLine (LineClue * clues, int size, int lineId)
  *
  * Early-prunes branches that conflict with known solved cells using bitmask checks.
  */
-void generatePermutations (Line * line, int clueIndex, uint64_t current, int position, bool countOnly, int * permCount)
+void generatePermutations (Line * line, int clueIndex, uint64_t current, int position, char countOnly, int * permCount)
 {
 	int groupSize, maxStart, newPosition, start;
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;

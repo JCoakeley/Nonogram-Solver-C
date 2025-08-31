@@ -24,7 +24,7 @@ int test_fullPuzzles ()
 	if (filePtr == NULL)
 		return -1;
 
-	actualSolution = solvePuzzle(filePtr, 1, &iterations);
+	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations);
 	fclose(filePtr);
 
 	filePtr = fopen(TEST1_SOLUTION, "r");
@@ -55,7 +55,7 @@ int test_fullPuzzles ()
 	if (filePtr == NULL)
 		return -1;
 
-	actualSolution = solvePuzzle(filePtr, 1, &iterations);
+	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations);
 	fclose(filePtr);
 
 	filePtr = fopen(TEST2_SOLUTION, "r");
@@ -86,7 +86,7 @@ int test_fullPuzzles ()
 	if (filePtr == NULL)
 		return -1;
 
-	actualSolution = solvePuzzle(filePtr, 1, &iterations);
+	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations);
 	fclose(filePtr);
 
 	filePtr = fopen(TEST3_SOLUTION, "r");
@@ -117,7 +117,7 @@ int test_fullPuzzles ()
 	if (filePtr == NULL)
 		return -1;
 
-	actualSolution = solvePuzzle(filePtr, 1, &iterations);
+	actualSolution = solvePuzzle(filePtr, MODE_TEST, &iterations);
 	fclose(filePtr);
 
 	filePtr = fopen(TEST4_SOLUTION, "r");

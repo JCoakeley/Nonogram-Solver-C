@@ -5,6 +5,12 @@
 #include "../include/solver.h"
 
 typedef enum {
+	MODE_STANDARD,
+	MODE_BENCHMARK,
+	MODE_TEST
+} SolvingMode;
+
+typedef enum {
 	FREE_NONE,
 	FREE_LINE_CLUES,
 	FREE_ROWS,
@@ -24,7 +30,9 @@ typedef struct {
 	CleanupStage stage;
 } SolverContext;
 
-int * solvePuzzle (FILE *, char, int *);
+int * solvePuzzle (FILE *, SolvingMode, int *);
+
+bool puzzleSetup (FILE *, SolverContext *);
 
 void freeResources (SolverContext *);
 

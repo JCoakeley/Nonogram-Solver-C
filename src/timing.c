@@ -11,7 +11,7 @@ void timingStart (Timings * timings, TimingPoint timingPoint)
 		break;
 
 		case FILEREADING:
-			clock_gettime(CLOCK_MONOTONIC, &timings->fileStart);
+			summationTiming(&timings->fileStart);
 		break;
 
 		case INIT:
@@ -19,11 +19,11 @@ void timingStart (Timings * timings, TimingPoint timingPoint)
 		break;
 
 		case OVERLAP:
-			clock_gettime(CLOCK_MONOTONIC, &timings->overlapStart);
+			summationTiming(&timings->overlapStart);
 		break;
 
 		case SOLVING:
-			clock_gettime(CLOCK_MONOTONIC, &timings->solvingStart);
+			summationTiming(&timings->solvingStart);
 		break;
 
 		case COUNTING:
@@ -54,7 +54,7 @@ void timingEnd (Timings * timings, TimingPoint timingPoint)
 		break;
 
 		case FILEREADING:
-			clock_gettime(CLOCK_MONOTONIC, &timings->fileEnd);
+			summationTiming(&timings->fileEnd);
 		break;
 
 		case INIT:
@@ -62,11 +62,11 @@ void timingEnd (Timings * timings, TimingPoint timingPoint)
 		break;
 
 		case OVERLAP:
-			clock_gettime(CLOCK_MONOTONIC, &timings->overlapEnd);
+			summationTiming(&timings->overlapEnd);
 		break;
 
 		case SOLVING:
-			clock_gettime(CLOCK_MONOTONIC, &timings->solvingEnd);
+			summationTiming(&timings->solvingEnd);
 		break;
 
 		case COUNTING:

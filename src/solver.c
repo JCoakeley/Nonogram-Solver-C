@@ -31,13 +31,27 @@ Line * createLine (LineClue * clues, int size, int lineId)
 	line->bitSet 			= NULL;
 	line->permutations 		= NULL;
 	line->state				= LINE_ALLOC_NONE;
+	line->genDirection		= DIRECTION_NONE;
 
 	return line;
 }
 
+void generatePermutations (Line * line, char countOnly, int * permCount)
+{
+	if (line->genDirection == DIRECTION_NONE)
+		generationDirection(line);
+
+	if (line->genDirection == DIRECTION_START)
+		generatePermutationsStart(line, 0, 0ULL, 0, countOnly, permCount);
+
+	else
+		generatePermutationsEnd(line, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, 0, countOnly, permCount);
+}
+
 /*
  * Recursively generates all valid permutations of a line that are consistent with
- * the current maskBits and partialBits.
+ * the current maskBits and partialBits. Generates permutations from the first clue
+ * to the last clue ie Direction Start.
  *
  * Parameters:
  * - line: The Line being solved
@@ -49,7 +63,7 @@ Line * createLine (LineClue * clues, int size, int lineId)
  *
  * Early-prunes branches that conflict with known solved cells using bitmask checks.
  */
-void generatePermutations (Line * line, int clueIndex, uint64_t current, int position, char countOnly, int * permCount)
+void generatePermutationsStart (Line * line, int clueIndex, uint64_t current, int position, char countOnly, int * permCount)
 {
 	int groupSize, maxStart, newPosition, start;
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
@@ -71,7 +85,7 @@ void generatePermutations (Line * line, int clueIndex, uint64_t current, int pos
 	}
 	
 	groupSize = line->clueSet->clues[clueIndex];
-	maxStart = line->size - totalRemainingLength(line, clueIndex);
+	maxStart = line->size - totalRemainingLengthStart(line, clueIndex);
 
 	/* Looping through each possible valid place for a specific clue within the permutation. */
 	for (start = position; start <= maxStart; ++start)
@@ -91,7 +105,7 @@ void generatePermutations (Line * line, int clueIndex, uint64_t current, int pos
 		if (((newBits & compareMask) ^ (line->partialBits & compareMask)) != 0)
 			continue;
 
-		generatePermutations(line, clueIndex + 1, newBits, newPosition, countOnly, permCount);
+		generatePermutationsStart(line, clueIndex + 1, newBits, newPosition, countOnly, permCount);
 	}
 }
 
@@ -101,7 +115,7 @@ void generatePermutations (Line * line, int clueIndex, uint64_t current, int pos
  *
  * Used to limit clue placement during permutation generation.
  */
-int totalRemainingLength (Line * line, int clueIndex)
+int totalRemainingLengthStart (Line * line, int clueIndex)
 {
 	int i, length = 0, size = line->clueSet->clueCount;
 
@@ -109,6 +123,85 @@ int totalRemainingLength (Line * line, int clueIndex)
 		length += line->clueSet->clues[i];
 
 	length += (size - clueIndex - 1);
+
+	return length;
+}
+
+/*
+ * Recursively generates all valid permutations of a line that are consistent with
+ * the current maskBits and partialBits. Generates permutations from the first clue
+ * to the last clue ie Direction Start.
+ *
+ * Parameters:
+ * - line: The Line being solved
+ * - clueIndex: Index of the clue currently being placed
+ * - current: Current state of the permutation (bit pattern)
+ * - position: Starting position for placing the next clue
+ * - countOnly: If true, only counts permutations without storing them
+ * - permCount: Pointer to either count or index for storing
+ *
+ * Early-prunes branches that conflict with known solved cells using bitmask checks.
+ */
+void generatePermutationsEnd (Line * line, int clueIndex, uint64_t current, uint64_t sizeBits, int position, char countOnly, int * permCount)
+{
+	int groupSize, maxStart, newPosition, start;
+	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
+
+	/* Base Case: All clues placed in the permutation */
+	if (clueIndex < 0)
+	{
+		/* Only counting or storing permutations that fit the mask and partial bits */
+		if (((current & line->maskBits) ^ line->partialBits) == 0)
+		{
+			if (countOnly)
+				(*permCount)++;
+
+			else
+				line->permutations[(*permCount)++] = current;
+		}
+
+		return;
+	}
+	
+	groupSize = line->clueSet->clues[clueIndex];
+	maxStart = line->size - totalRemainingLengthEnd(line, clueIndex);
+
+	/* Looping through each possible valid place for a specific clue within the permutation. */
+	for (start = position; start <= maxStart; ++start)
+	{
+		groupBits = (sizeBits - (sizeBits >> groupSize)) >> start;
+		newBits = current | groupBits;
+
+		newPosition = start + groupSize + 1;
+
+		writtenBitsMask = sizeBits - (sizeBits >> newPosition);
+
+		/* Setting the bits within the range of the current partial permutation that are also solved
+			on the gameboard. */
+		compareMask = writtenBitsMask & line->maskBits;
+
+		/* Early pruning of branches that don't fit the mask and partial bits */
+		if (((newBits & compareMask) ^ (line->partialBits & compareMask)) != 0)
+			continue;
+
+		generatePermutationsEnd(line, clueIndex - 1, newBits, sizeBits, newPosition, countOnly, permCount);
+	}
+}
+
+/*
+ * Computes the minimum number of cells required to place all clues ending
+ * from the given clueIndex, including the required spaces between clues.
+ *
+ * Used to limit clue placement during permutation generation.
+ */
+int totalRemainingLengthEnd (Line * line, int clueIndex)
+{
+	int i, length = 0;
+
+	for (i = clueIndex; i >= 0; --i)
+		length += line->clueSet->clues[i];
+
+	length += clueIndex;
 
 	return length;
 }
@@ -263,5 +356,34 @@ void overlap (Line * line)
 			line->partialBits |= 1ULL << j;
 		}
 	}
+	return;
+}
+
+/*
+ * Determines which direction to generate permutations from.
+ *
+ * Parameters:
+ * - line: Pointer to the Line struct to update
+ *
+ * The line is split in half and the number of known cells (set bits)
+ * in each half of maskBits is counted. The direction with more known
+ * cells is chosen to begin generation from.
+ *
+ * Sets:
+ * - line->genDirection to DIRECTION_START or DIRECTION_END
+ */
+void generationDirection (Line * line)
+{
+	int half = line->size / 2;
+	uint64_t mask = (1ULL << half) - 1ULL;
+
+	int start = __builtin_popcountll(line->maskBits & mask);
+	int end   = __builtin_popcountll(line->maskBits >> half);
+
+	if (start >= end)
+		line->genDirection = DIRECTION_START;
+	else
+		line->genDirection = DIRECTION_END;
+
 	return;
 }

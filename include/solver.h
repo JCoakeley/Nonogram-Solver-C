@@ -5,9 +5,15 @@
 
 Line * createLine (struct LineClue *, int, int);
 
-void generatePermutations (Line *, int, uint64_t, int, char, int *);
+void generatePermutations (Line *, char, int *);
 
-int totalRemainingLength (Line *, int);
+void generatePermutationsStart (Line *, int, uint64_t, int, char, int *);
+
+int totalRemainingLengthStart (Line *, int);
+
+void generatePermutationsEnd (Line *, int, uint64_t, uint64_t, int, char, int *);
+
+int totalRemainingLengthEnd (Line *, int);
 
 void updateBitMasks(Line *, const int *);
 
@@ -18,5 +24,7 @@ void generateConsistentPattern (Line *);
 int minRequiredLength (Line *);
 
 void overlap (Line *);
+
+void generationDirection (Line *);
 
 #endif

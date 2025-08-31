@@ -13,6 +13,12 @@ typedef enum {
 	LINE_ALLOC_ALL
 } LineAllocState;
 
+typedef enum {
+	DIRECTION_NONE,
+	DIRECTION_START,
+	DIRECTION_END
+} GenerationDirection;
+
 typedef struct LineClue {
 	int * clues;
 	int clueCount;
@@ -29,6 +35,7 @@ typedef struct Line {
 	uint64_t partialBits;
 	uint64_t maskBits;
 	LineAllocState state;
+	GenerationDirection genDirection;
 } Line;
 
 LineClue * createLineClueSet (int *, int);

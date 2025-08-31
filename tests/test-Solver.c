@@ -44,7 +44,7 @@ int test_generatePermutations_counting (void)
 	Line * line3 = createLine (&lineclue3, 40, 2);
 	/* 19 choose 5 */
 
-	generatePermutations(line1, 0, 0ULL, 0, TRUE, &(line1->permutationCount));
+	generatePermutations(line1, TRUE, &(line1->permutationCount));
 
 	if (line1->permutationCount != 6)
 	{
@@ -52,7 +52,7 @@ int test_generatePermutations_counting (void)
 		++returnValue;
 	}
 
-	generatePermutations(line2, 0, 0ULL, 0, TRUE, &(line2->permutationCount));
+	generatePermutations(line2, TRUE, &(line2->permutationCount));
 	
 	if (line2->permutationCount != 220)
 	{
@@ -60,7 +60,7 @@ int test_generatePermutations_counting (void)
 		++returnValue;
 	}
 
-	generatePermutations(line3, 0, 0ULL, 0, TRUE, &(line3->permutationCount));
+	generatePermutations(line3, TRUE, &(line3->permutationCount));
 		
 	if (line3->permutationCount != 11628)
 	{

@@ -38,8 +38,11 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 	/* Run 10 times for benchmarking */
 	if (mode == MODE_BENCHMARK) loop = 10;
 
+	timingEnd(timings, FILEREADING);
+	
 	do
 	{
+		timingStart(timings, FILEREADING);
 		/* Initialize puzzle data structures and directly frees memory if an allocation error occurs */
 		if (!puzzleSetup(filePtr, &solver, timings))
 			goto free;
@@ -83,7 +86,7 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 					{
 						timingStart(timings, COUNTING);
 						/* Count permutations first to allocate exact size */
-						generatePermutations(solver.lines[i], 0, 0ULL, 0, TRUE, &(solver.lines[i]->permutationCount));
+						generatePermutations(solver.lines[i], TRUE, &(solver.lines[i]->permutationCount));
 
 						timingEnd(timings, COUNTING);
 						timingStart(timings, INIT);
@@ -104,7 +107,7 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 						timingStart(timings, GENERATION);
 
 						/* Actually generate and store the permutations */
-						generatePermutations(solver.lines[i], 0, 0ULL, 0, FALSE, &(solver.lines[i]->storeCount));
+						generatePermutations(solver.lines[i], FALSE, &(solver.lines[i]->storeCount));
 
 						timingEnd(timings, GENERATION);
 						*totalPermutations += solver.lines[i]->storeCount;
@@ -143,7 +146,7 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 					{
 						timingStart(timings, COUNTING);
 						/* Count permutations first to allocate exact size */
-						generatePermutations(solver.lines[i], 0, 0ULL, 0, TRUE, &(solver.lines[i]->permutationCount));
+						generatePermutations(solver.lines[i], TRUE, &(solver.lines[i]->permutationCount));
 
 						timingEnd(timings, COUNTING);
 						timingStart(timings, INIT);
@@ -164,7 +167,7 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 						timingStart(timings, GENERATION);
 
 						/* Actually generate and store the permutations */
-						generatePermutations(solver.lines[i], 0, 0ULL, 0, FALSE, &(solver.lines[i]->storeCount));
+						generatePermutations(solver.lines[i], FALSE, &(solver.lines[i]->storeCount));
 
 						timingEnd(timings, GENERATION);
 						*totalPermutations += solver.lines[i]->storeCount;
@@ -190,10 +193,16 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 			memset(solver.columnsToUpdate, 0x00, sizeof(int) * width);
 		}
 
-		rewind(filePtr);
+		if (loop > 1)
+		{
+			rewind(filePtr);
+			freeResources(&solver);
+			free(solver.gameBoard);
+			solver.gameBoard = NULL;
+		}
+		
+		timingEnd(timings, SOLVING);
 	} while (--loop > 0);
-
-	timingEnd(timings, SOLVING);
 
 	/* Only print gameBoard if not in test mode */
 	if (mode != MODE_TEST)

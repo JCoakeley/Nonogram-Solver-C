@@ -162,7 +162,7 @@ void filterPermutations (Line * line)
 	if (mask != 0)
 	{
 		for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
-			if (((perms[i] & mask) ^ partial) != 0)
+			if ((perms[i] & mask) != partial)
 				clearBit(bSet, i);
 	}
 					

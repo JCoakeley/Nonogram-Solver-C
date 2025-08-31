@@ -1,19 +1,31 @@
 #define _POSIX_C_SOURCE 199309L
 #include <stdlib.h>
+#include <string.h>
 #include "../include/solverAPI.h"
 
 int main (int argc, char ** argv)
 {
 	Timings timings = {0};
 	timingStart(&timings, TOTAL);
-	int iterations = 0, totalPermutations = 0;
+	int i, iterations = 0, totalPermutations = 0;
 	FILE * fPtr = NULL;
 	int * gameBoard = NULL;
+	char * fileName = NULL;
+	SolvingMode mode = MODE_STANDARD;
+
+	for (i = 1; i < argc; ++i)
+	{
+		if (strcmp(argv[i], "--benchmark") == 0)
+			mode = MODE_BENCHMARK;
+			
+		else
+			fileName = argv[i];  // first non-flag is treated as filename
+	}
 
 	timingStart(&timings, FILEREADING);
-	fPtr = getFile(argc, argv[1]);
+	fPtr = getFile(fileName);
 
-	gameBoard = solvePuzzle(fPtr, MODE_STANDARD, &iterations, &totalPermutations, &timings);
+	gameBoard = solvePuzzle(fPtr, mode, &iterations, &totalPermutations, &timings);
 
 	free(gameBoard);
 	gameBoard = NULL;

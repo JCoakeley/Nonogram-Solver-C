@@ -5,7 +5,7 @@
 
 struct LineClue;
 
-FILE * getFile (int, char *);
+FILE * getFile (char *);
 
 struct LineClue ** readFile (FILE *, int *, int *);
 

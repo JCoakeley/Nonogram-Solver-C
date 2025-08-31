@@ -13,7 +13,7 @@
  *
  * TODO: Replace infinite loop with an explicit "Try again?" prompt to allow graceful exit.
  */
-FILE * getFile (int argc, char * argv)
+FILE * getFile (char * cliFileName)
 {
 	FILE * fPtr = NULL;
 	char fileName[256];
@@ -23,7 +23,7 @@ FILE * getFile (int argc, char * argv)
 		loop = FALSE;
 
 		/* Filename not passed as argument when calling the program */
-		if (argc == 1)
+		if (cliFileName == NULL)
 		{
 			printf("Please enter a filename: ");
 
@@ -45,10 +45,9 @@ FILE * getFile (int argc, char * argv)
 		}
 
 		/* Filename pass as argument when calling the program */
-		else strcpy(fileName, argv);
+		else strcpy(fileName, cliFileName);
 
 		/* If filename passed as argument is invalid, need to prompt user next loop iteration */
-		argc = 1;
 		fPtr = fopen(fileName, "r");
 
 		if (fPtr == NULL)

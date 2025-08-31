@@ -21,7 +21,7 @@ void filterPermutations (Line *);
 
 void generateConsistentPattern (Line *);
 
-int minRequiredLength (Line *);
+int minRequiredLength (LineClue *);
 
 void overlap (Line *);
 

@@ -143,7 +143,7 @@ int test_minRequiredLength (void)
 	Line * line3 = createLine (&lineclue3, 50, 0);
 	/* Length = 45 */
 
-	length = minRequiredLength(line1);
+	length = minRequiredLength(&lineclue1);
 
 	if (length != 5)
 	{
@@ -151,7 +151,7 @@ int test_minRequiredLength (void)
 		++returnValue;
 	}
 
-	length = minRequiredLength(line2);
+	length = minRequiredLength(&lineclue2);
 	
 	if (length != 20)
 	{
@@ -159,7 +159,7 @@ int test_minRequiredLength (void)
 		++returnValue;
 	}
 
-	length = minRequiredLength(line3);
+	length = minRequiredLength(&lineclue3);
 	
 	if (length != 45)
 	{

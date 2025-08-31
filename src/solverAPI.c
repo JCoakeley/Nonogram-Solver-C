@@ -29,7 +29,7 @@
  *
  * Caller is responsible for freeing the returned game board.
  */
-int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * totalPermutations, Timings * timings)
+int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * totalPermutations, int * maxPermutations, Timings * timings)
 {
 	/* Zero-initialize all context fields */
 	SolverContext solver = {0};
@@ -57,12 +57,14 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 		{
 			overlap(solver.lines[i]);
 			setGameBoardRow(solver.gameBoard, solver.lines[i], solver.columnsToUpdate);
+			*maxPermutations += solver.lines[i]->maxPermutations;
 		}
 
 		for ( ; i < width + length; ++i)
 		{
 			overlap(solver.lines[i]);
 			setGameBoardColumn(solver.gameBoard, solver.lines[i], width, solver.rowsToUpdate);
+			*maxPermutations += solver.lines[i]->maxPermutations;
 		}
 
 		timingEnd(timings, OVERLAP);

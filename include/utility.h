@@ -34,6 +34,7 @@ typedef struct Line {
 	uint64_t * permutations;
 	uint64_t partialBits;
 	uint64_t maskBits;
+	uint64_t maxPermutations;
 	LineAllocState state;
 	GenerationDirection genDirection;
 } Line;
@@ -45,5 +46,7 @@ void printLineDetails (Line *);
 void printTimingData (Timings *);
 
 void printFormattedTime (long);
+
+uint64_t nCr (int, int);
 
 #endif

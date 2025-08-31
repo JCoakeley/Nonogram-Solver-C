@@ -18,8 +18,11 @@
 Line * createLine (LineClue * clues, int size, int lineId)
 {
 	Line * line = (Line *)malloc(sizeof(Line));
+	int n = 0;
 
 	if (line == NULL) return line;
+
+	n = size + clues->clueCount - minRequiredLength(clues);
 
 	line->size 				= size;
 	line->lineId 			= lineId;
@@ -28,6 +31,7 @@ Line * createLine (LineClue * clues, int size, int lineId)
 	line->storeCount		= 0;
 	line->maskBits 			= 0ULL;
 	line->partialBits 		= 0ULL;
+	line->maxPermutations	= nCr(n, clues->clueCount);
 	line->bitSet 			= NULL;
 	line->permutations 		= NULL;
 	line->state				= LINE_ALLOC_NONE;
@@ -309,14 +313,14 @@ void generateConsistentPattern (Line * line)
  *
  * Used for overlap deduction and permutation validation.
  */
-int minRequiredLength (Line * line)
+int minRequiredLength (LineClue * clueSet)
 {
 	int i, total = 0;
 
-	for (i = 0; i < line->clueSet->clueCount; ++i)
-		total += line->clueSet->clues[i];
+	for (i = 0; i < clueSet->clueCount; ++i)
+		total += clueSet->clues[i];
 
-	total += line->clueSet->clueCount - 1;
+	total += clueSet->clueCount - 1;
 
 	return total;
 }
@@ -336,7 +340,7 @@ void overlap (Line * line)
 {
 	int i, j, leftEnd, rightStart;
 	int leftPos = 0;
-	int rightPos = line->size - minRequiredLength(line);
+	int rightPos = line->size - minRequiredLength(line->clueSet);
 	int * clues = line->clueSet->clues;
 
 	for (i = 0; i < line->clueSet->clueCount; ++i)

@@ -176,3 +176,26 @@ void printFormattedTime (long nano)
 
 	return;
 }
+
+uint64_t nCr (int n, int r)
+{
+	int i;
+	uint64_t result = 1;
+
+	if (r < 0 || r > n)
+		return 0;
+
+	if (r == 0 || r == n)
+		return 1;
+
+	if (n - r < r)
+		r = n - r;
+
+	for (i = 1; i <= r; ++i)
+	{
+		result *= n - (r - i);
+		result /= i;
+	}
+
+	return result;
+}

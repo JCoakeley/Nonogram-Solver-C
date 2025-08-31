@@ -30,7 +30,7 @@ typedef struct {
 	CleanupStage stage;
 } SolverContext;
 
-int * solvePuzzle (FILE *, SolvingMode, int *, int *, Timings *);
+int * solvePuzzle (FILE *, SolvingMode, int *, int *, int *, Timings *);
 
 char puzzleSetup (FILE *, SolverContext *, Timings *);
 

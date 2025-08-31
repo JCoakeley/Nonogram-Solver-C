@@ -7,7 +7,7 @@ int main (int argc, char ** argv)
 {
 	Timings timings = {0};
 	timingStart(&timings, TOTAL);
-	int i, iterations = 0, totalPermutations = 0;
+	int i, iterations = 0, totalPermutations = 0, maxPermutations = 0;
 	FILE * fPtr = NULL;
 	int * gameBoard = NULL;
 	char * fileName = NULL;
@@ -25,7 +25,7 @@ int main (int argc, char ** argv)
 	timingStart(&timings, FILEREADING);
 	fPtr = getFile(fileName);
 
-	gameBoard = solvePuzzle(fPtr, mode, &iterations, &totalPermutations, &timings);
+	gameBoard = solvePuzzle(fPtr, mode, &iterations, &totalPermutations, &maxPermutations, &timings);
 
 	free(gameBoard);
 	gameBoard = NULL;
@@ -37,6 +37,7 @@ int main (int argc, char ** argv)
 	printTimingData(&timings);
 	printf("\nIterations: %d\n", iterations);
 	printf("Total Permutations Generated: %d\n", totalPermutations);
+	printf("Maximun Possible Permutations: %d\n", maxPermutations);
 
 	return EXIT_SUCCESS;
 }

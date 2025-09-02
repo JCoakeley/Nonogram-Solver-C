@@ -130,17 +130,14 @@ int test_minRequiredLength (void)
 
 	int clues1[] = {1, 1, 1};
 	LineClue lineclue1 = {(int *)&clues1, 3};
-	Line * line1 = createLine (&lineclue1, 5, 0);
 	/* Length = 5 */
 
 	int clues2[] = {1, 3, 8, 5};
 	LineClue lineclue2 = {(int *)&clues2, 4};
-	Line * line2 = createLine (&lineclue2, 25, 0);
 	/* Length = 20 */
 
 	int clues3[] = {7, 1, 8, 2, 1, 5, 7, 3, 3};
 	LineClue lineclue3 = {(int *)&clues3, 9};
-	Line * line3 = createLine (&lineclue3, 50, 0);
 	/* Length = 45 */
 
 	length = minRequiredLength(&lineclue1);
@@ -166,15 +163,6 @@ int test_minRequiredLength (void)
 		printf("Test Failure: test_minRequiredLength #3: Expected: 45, Actual: %d\n", length);
 		++returnValue;
 	}
-
-	free(line1);
-	line1 = NULL;
-
-	free(line2);
-	line2 = NULL;
-
-	free(line3);
-	line3 = NULL;
 
 	return returnValue;
 }

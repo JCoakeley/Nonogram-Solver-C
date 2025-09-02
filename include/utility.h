@@ -49,4 +49,6 @@ void printFormattedTime (long);
 
 uint64_t nCr (int, int);
 
+void formatNumber (char *, int);
+
 #endif

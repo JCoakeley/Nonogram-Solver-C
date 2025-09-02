@@ -84,26 +84,15 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 					updateBitMasks(solver.lines[i], solver.gameBoard + (i * width));
 
 					/* Count, allocate and store permutations if not done yet for the row */
-					if (solver.lines[i]->permutationCount == 0)
+					if (solver.lines[i]->storeCount == 0)
 					{
-						timingStart(timings, COUNTING);
-						/* Count permutations first to allocate exact size */
-						generatePermutations(solver.lines[i], TRUE, &(solver.lines[i]->permutationCount));
-
-						timingEnd(timings, COUNTING);
 						timingStart(timings, INIT);
 						
-						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->permutationCount);
+						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->maxPermutations);
 						if (solver.lines[i]->permutations == NULL)
 							goto free;
 
-						solver.lines[i]->state = LINE_ALLOC_PERMS;
-							
-						solver.lines[i]->bitSet = newBitSet(solver.lines[i]->permutationCount);
-						if (solver.lines[i]->bitSet == NULL)
-							goto free;
-
-						solver.lines[i]->state = LINE_ALLOC_ALL;
+						solver.lines[i]->state = LINE_ALLOC_PERMS;						
 
 						timingEnd(timings, INIT);
 						timingStart(timings, GENERATION);
@@ -112,7 +101,18 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 						generatePermutations(solver.lines[i], FALSE, &(solver.lines[i]->storeCount));
 
 						timingEnd(timings, GENERATION);
+						timingStart(timings, INIT);
+
+						solver.lines[i]->permutations = (uint64_t *)realloc(solver.lines[i]->permutations, sizeof(uint64_t) * solver.lines[i]->storeCount);
+
+						solver.lines[i]->bitSet = newBitSet(solver.lines[i]->storeCount);
+						if (solver.lines[i]->bitSet == NULL)
+							goto free;
+
+						solver.lines[i]->state = LINE_ALLOC_ALL;
 						*totalPermutations += solver.lines[i]->storeCount;
+
+						timingEnd(timings, INIT);
 					}
 
 					/* Only filter if permutations were already generated */
@@ -144,26 +144,15 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 					updateBitMasks(solver.lines[i], solver.columnPartialSolution);
 
 					/* Count, allocate and store permutations if not done yet for the column */
-					if (solver.lines[i]->permutationCount == 0)
+					if (solver.lines[i]->storeCount == 0)
 					{
-						timingStart(timings, COUNTING);
-						/* Count permutations first to allocate exact size */
-						generatePermutations(solver.lines[i], TRUE, &(solver.lines[i]->permutationCount));
-
-						timingEnd(timings, COUNTING);
 						timingStart(timings, INIT);
 
-						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->permutationCount);
+						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->maxPermutations);
 						if (solver.lines[i]->permutations == NULL)
 							goto free;
 
 						solver.lines[i]->state = LINE_ALLOC_PERMS;
-							
-						solver.lines[i]->bitSet = newBitSet(solver.lines[i]->permutationCount);
-						if (solver.lines[i]->bitSet == NULL)
-							goto free;
-
-						solver.lines[i]->state = LINE_ALLOC_ALL;
 
 						timingEnd(timings, INIT);
 						timingStart(timings, GENERATION);
@@ -172,7 +161,18 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 						generatePermutations(solver.lines[i], FALSE, &(solver.lines[i]->storeCount));
 
 						timingEnd(timings, GENERATION);
+						timingStart(timings, INIT);
+
+						solver.lines[i]->permutations = (uint64_t *)realloc(solver.lines[i]->permutations, sizeof(uint64_t) * solver.lines[i]->storeCount);
+
+						solver.lines[i]->bitSet = newBitSet(solver.lines[i]->storeCount);
+						if (solver.lines[i]->bitSet == NULL)
+							goto free;
+
+						solver.lines[i]->state = LINE_ALLOC_ALL;
 						*totalPermutations += solver.lines[i]->storeCount;
+
+						timingEnd(timings, INIT);
 					}
 
 					/* Only filter if permutations were already generated */

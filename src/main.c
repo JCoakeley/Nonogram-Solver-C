@@ -12,6 +12,8 @@ int main (int argc, char ** argv)
 	int * gameBoard = NULL;
 	char * fileName = NULL;
 	SolvingMode mode = MODE_STANDARD;
+	char totalPerms[64];
+	char maxPerms[64];
 
 	for (i = 1; i < argc; ++i)
 	{
@@ -35,9 +37,11 @@ int main (int argc, char ** argv)
 
 	timingEnd(&timings, TOTAL);
 	printTimingData(&timings);
+	formatNumber(totalPerms, totalPermutations);
+	formatNumber(maxPerms, maxPermutations);
 	printf("\nIterations: %d\n", iterations);
-	printf("Total Permutations Generated: %d\n", totalPermutations);
-	printf("Maximun Possible Permutations: %d\n", maxPermutations);
+	printf("Total Permutations Generated:  %s\n", totalPerms);
+	printf("Maximum Possible Permutations: %s\n", maxPerms);
 
 	return EXIT_SUCCESS;
 }

@@ -16,7 +16,7 @@ TEST_EXEC = build/test_runner
 all: $(EXEC)
 
 $(EXEC): $(OBJ) | build
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -lm
 
 # Objects from src
 build/%.o: src/%.c | build
@@ -24,13 +24,13 @@ build/%.o: src/%.c | build
 
 # Objects from tests (separate name pattern to avoid rule collision)
 build/tests_%.o: tests/%.c | build
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ -lm
 
 tests: $(TEST_EXEC)
 
 # Link tests against app objects *without* main.o
 $(TEST_EXEC): $(OBJ_NOMAIN) $(TEST_OBJ) | build
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -lm
 
 build:
 	mkdir -p build

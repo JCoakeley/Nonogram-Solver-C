@@ -1,6 +1,7 @@
 #include "../include/utility.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "../include/timing.h"
 
 /*
@@ -110,26 +111,41 @@ void printTimingData (Timings * timings)
 	long commonNanos 	= (timings->commonEnd.tv_sec - timings->commonStart.tv_sec) * 1000000000L 
 						+ (timings->commonEnd.tv_nsec - timings->commonStart.tv_nsec);
 	
-	printf("Total Time: ");
+	printf("%-16s", "Total Time:");
 	printFormattedTime(totalNanos);
+	/* printf(": %ld", totalNanos); */
 	
-	printf("\n\nFile Reading: ");
+	printf("\n\n%-16s", "File Reading:");
 	printFormattedTime(fileNanos);
-	printf("\nInitialization: ");
+	/* printf(": %ld", fileNanos); */
+	
+	printf("\n%-16s", "Initialization:");
 	printFormattedTime(initNanos);
-	printf("\nOverlap: ");
+	/* printf(": %ld", initNanos); */
+	
+	printf("\n%-16s", "Overlap:");
 	printFormattedTime(overlapNanos);
-	printf("\nSolving Loop: ");
+	/* printf(": %ld", overlapNanos); */
+	
+	printf("\n%-16s", "Solving Loop:");
 	printFormattedTime(solvingNanos);
+	/* printf(": %ld", solvingNanos); */
 	
 	printf("\n\nCounting Permutations: ");
 	printFormattedTime(countingNanos);
-	printf("\nGenerating Permutations: ");
+	/* printf(": %ld", countingNanos); */
+	
+	printf("\nGenerate Permutations: ");
 	printFormattedTime(generateNanos);
-	printf("\nFiltering: ");
+	/* printf(": %ld", generateNanos); */
+	
+	printf("\nFilter Permutations:   ");
 	printFormattedTime(filteringNanos);
-	printf("\nGenerating Consistent Pattern: ");
+	/* printf(": %ld", filteringNanos); */
+	
+	printf("\nConsistent Pattern:    ");
 	printFormattedTime(commonNanos);
+	/* printf(": %ld", commonNanos); */
 	printf("\n");
 
 	return;
@@ -198,4 +214,47 @@ uint64_t nCr (int n, int r)
 	}
 
 	return result;
+}
+
+
+/*
+ * Formats an integer with commas every 3 digits (e.g., 1234567 → "1,234,567").
+ *
+ * Parameters:
+ * - buffer: Destination buffer to store the formatted string (must be large enough)
+ * - number: The integer to format (must be >= 0)
+ *
+ * The buffer will be null-terminated.
+ */
+void formatNumber (char * buffer, int number)
+{
+	int i, j = 0, numDigits = 0, length = 0;
+	int n = number;
+
+	if (number == 0) numDigits = 1;
+
+	else
+		numDigits = (int)log10(number) + 1;
+
+	length = numDigits + (numDigits - 1) / 3;
+
+	for (i = length - 1; i >= 0; --i)
+	{
+		if (j == 3)
+		{
+			buffer[i] = ',';
+			j = 0;
+		}
+
+		else 
+		{
+			buffer[i] = '0' + (n % 10);
+			n /= 10;
+			++j;
+		}
+	}
+
+	buffer[length] = '\0';
+
+	return;
 }

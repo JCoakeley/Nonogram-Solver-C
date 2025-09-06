@@ -36,4 +36,6 @@ char puzzleSetup (FILE *, SolverContext *, Timings *);
 
 void freeResources (SolverContext *);
 
+char generationDecision (Line *, Timings *, int *);
+
 #endif

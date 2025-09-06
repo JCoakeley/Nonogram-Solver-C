@@ -3,6 +3,7 @@
 #include "test-GameBoard.h"
 #include "test-Solver.h"
 #include "test-FullPuzzles.h"
+#include "test-SubLine.h"
 
 int main (void)
 {
@@ -23,6 +24,12 @@ int main (void)
 	failures += test_generatePermutations_counting();
 
 	if (failures == 0) printf("All Solver tests passed!\n");
+	totalFailures += failures;
+
+	failures = test_SubLine();
+	failures +=test_updateSubLineBitMasks();
+	
+	if (failures == 0) printf("All SubLine tests passed!\n");
 	totalFailures += failures;
 
 	failures = test_fullPuzzles();

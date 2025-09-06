@@ -1,5 +1,6 @@
 #include "../include/solver.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 /*
  * Creates and initializes a new Line struct.
@@ -27,29 +28,50 @@ Line * createLine (LineClue * clues, int size, int lineId)
 	line->size 				= size;
 	line->lineId 			= lineId;
 	line->clueSet 			= clues;
-	line->permutationCount 	= 0;
 	line->storeCount		= 0;
 	line->maskBits 			= 0ULL;
 	line->partialBits 		= 0ULL;
 	line->maxPermutations	= nCr(n, clues->clueCount);
 	line->bitSet 			= NULL;
 	line->permutations 		= NULL;
+	line->startEdge			= NULL;
+	line->endEdge			= NULL;
 	line->state				= LINE_ALLOC_NONE;
 	line->genDirection		= DIRECTION_NONE;
 
 	return line;
 }
 
-void generatePermutations (Line * line, char countOnly, int * permCount)
+SubLine * createSubLine (LineClue * clues, int lineSize)
+{
+	SubLine * subLine = (SubLine *)malloc(sizeof(SubLine));
+
+	if (subLine == NULL) return subLine;
+	
+	subLine->size 			= (lineSize / 2) < 20 ? (lineSize / 2) : 20;
+	subLine->lineSize		= lineSize;
+	subLine->permCount		= 0;
+	subLine->storeCount 	= 0;
+	subLine->clueSet		= clues;
+	subLine->maskBits 		= 0ULL;
+	subLine->partialBits 	= 0ULL;
+	subLine->bitSet 		= NULL;
+	subLine->permutations 	= NULL;
+	subLine->state 			= LINE_ALLOC_NONE;
+	
+	return subLine;
+}
+
+void generatePermutations (Line * line, int * permCount)
 {
 	if (line->genDirection == DIRECTION_NONE)
 		generationDirection(line);
 
 	if (line->genDirection == DIRECTION_START)
-		generatePermutationsStart(line, 0, 0ULL, 0, countOnly, permCount);
+		generatePermutationsStart(line, 0, 0ULL, 0, permCount);
 
 	else
-		generatePermutationsEnd(line, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, 0, countOnly, permCount);
+		generatePermutationsEnd(line, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, 0, permCount);
 }
 
 /*
@@ -67,7 +89,7 @@ void generatePermutations (Line * line, char countOnly, int * permCount)
  *
  * Early-prunes branches that conflict with known solved cells using bitmask checks.
  */
-void generatePermutationsStart (Line * line, int clueIndex, uint64_t current, int position, char countOnly, int * permCount)
+void generatePermutationsStart (Line * line, int clueIndex, uint64_t current, int position, int * permCount)
 {
 	int groupSize, maxStart, newPosition, start;
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
@@ -75,15 +97,7 @@ void generatePermutationsStart (Line * line, int clueIndex, uint64_t current, in
 	/* Base Case: All clues placed in the permutation */
 	if (clueIndex >= line->clueSet->clueCount)
 	{
-		/* Only counting or storing permutations that fit the mask and partial bits */
-		if (((current & line->maskBits) ^ line->partialBits) == 0)
-		{
-			if (countOnly)
-				(*permCount)++;
-
-			else
-				line->permutations[(*permCount)++] = current;
-		}
+		line->permutations[(*permCount)++] = current;
 
 		return;
 	}
@@ -106,10 +120,58 @@ void generatePermutationsStart (Line * line, int clueIndex, uint64_t current, in
 		compareMask = writtenBitsMask & line->maskBits;
 
 		/* Early pruning of branches that don't fit the mask and partial bits */
-		if (((newBits & compareMask) ^ (line->partialBits & compareMask)) != 0)
+		if ( ( (newBits & compareMask) ^ (line->partialBits & compareMask) ) != 0 )
 			continue;
 
-		generatePermutationsStart(line, clueIndex + 1, newBits, newPosition, countOnly, permCount);
+		generatePermutationsStart(line, clueIndex + 1, newBits, newPosition, permCount);
+	}
+}
+
+void generateSubLinePermutationsStart (SubLine * subLine, int clueIndex, uint64_t current, char countOnly, int position, int * permCount)
+{
+	int groupSize, maxStart, newPosition, start;
+	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
+
+	/* Base Case: All clues placed in the permutation */
+	if (clueIndex >= subLine->clueSet->clueCount || position >= subLine->size)
+	{
+		/* Only counting or storing permutations that fit the mask and partial bits */
+		if (((current & subLine->maskBits) ^ subLine->partialBits) == 0)
+		{
+			if (countOnly)
+				++(*permCount);
+
+			else
+				subLine->permutations[(*permCount)++] = current;
+		}
+
+		return;
+	}
+	
+	groupSize = subLine->clueSet->clues[clueIndex];
+	maxStart = subLine->lineSize - totalRemainingLengthStartSubLine(subLine, clueIndex);
+
+	/* Looping through each possible valid place for a specific clue within the permutation. */
+	for (start = position; start <= maxStart; ++start)
+	{	
+		groupBits = ((1ULL << groupSize) - 1ULL) << start;
+		newBits = current | groupBits;
+
+		newPosition = start + groupSize + 1;
+
+		writtenBitsMask = (1ULL << newPosition) - 1ULL;
+
+		/* Setting the bits within the range of the current partial permutation that are also solved
+			on the gameboard. */
+		compareMask = writtenBitsMask & subLine->maskBits;
+
+		/* Early pruning of branches that don't fit the mask and partial bits */
+		if ( ( (newBits & compareMask) ^ (subLine->partialBits & compareMask) ) != 0 )
+			continue;
+
+		generateSubLinePermutationsStart(subLine, clueIndex + 1, newBits, countOnly, newPosition, permCount);
+
+		if (start >= subLine->size) break;
 	}
 }
 
@@ -131,6 +193,18 @@ int totalRemainingLengthStart (Line * line, int clueIndex)
 	return length;
 }
 
+int totalRemainingLengthStartSubLine (SubLine * subLine, int clueIndex)
+{
+	int i, length = 0, size = subLine->clueSet->clueCount;
+
+	for (i = clueIndex; i < size; ++i)
+		length += subLine->clueSet->clues[i];
+
+	length += (size - clueIndex - 1);
+
+	return length;
+}
+
 /*
  * Recursively generates all valid permutations of a line that are consistent with
  * the current maskBits and partialBits. Generates permutations from the first clue
@@ -146,7 +220,7 @@ int totalRemainingLengthStart (Line * line, int clueIndex)
  *
  * Early-prunes branches that conflict with known solved cells using bitmask checks.
  */
-void generatePermutationsEnd (Line * line, int clueIndex, uint64_t current, uint64_t sizeBits, int position, char countOnly, int * permCount)
+void generatePermutationsEnd (Line * line, int clueIndex, uint64_t current, uint64_t sizeBits, int position, int * permCount)
 {
 	int groupSize, maxStart, newPosition, start;
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
@@ -154,15 +228,7 @@ void generatePermutationsEnd (Line * line, int clueIndex, uint64_t current, uint
 	/* Base Case: All clues placed in the permutation */
 	if (clueIndex < 0)
 	{
-		/* Only counting or storing permutations that fit the mask and partial bits */
-		if (((current & line->maskBits) ^ line->partialBits) == 0)
-		{
-			if (countOnly)
-				(*permCount)++;
-
-			else
-				line->permutations[(*permCount)++] = current;
-		}
+		line->permutations[(*permCount)++] = current;
 
 		return;
 	}
@@ -185,10 +251,58 @@ void generatePermutationsEnd (Line * line, int clueIndex, uint64_t current, uint
 		compareMask = writtenBitsMask & line->maskBits;
 
 		/* Early pruning of branches that don't fit the mask and partial bits */
-		if (((newBits & compareMask) ^ (line->partialBits & compareMask)) != 0)
+		if ( ( (newBits & compareMask) ^ (line->partialBits & compareMask) ) != 0 )
 			continue;
 
-		generatePermutationsEnd(line, clueIndex - 1, newBits, sizeBits, newPosition, countOnly, permCount);
+		generatePermutationsEnd(line, clueIndex - 1, newBits, sizeBits, newPosition, permCount);
+	}
+}
+
+void generateSubLinePermutationsEnd (SubLine * subLine, int clueIndex, uint64_t current, uint64_t sizeBits, char countOnly, int position, int * permCount)
+{
+	int groupSize, maxStart, newPosition, start;
+	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
+
+	/* Base Case: All clues placed in the permutation */
+	if (clueIndex < 0 || position >= subLine->size)
+	{
+		/* Only counting or storing permutations that fit the mask and partial bits */
+		if (((current & subLine->maskBits) ^ subLine->partialBits) == 0)
+		{
+			if (countOnly)
+				++(*permCount);
+
+			else
+				subLine->permutations[(*permCount)++] = current;
+		}
+
+		return;
+	}
+	
+	groupSize = subLine->clueSet->clues[clueIndex];
+	maxStart = subLine->lineSize - totalRemainingLengthEndSubLine(subLine, clueIndex);
+
+	/* Looping through each possible valid place for a specific clue within the permutation. */
+	for (start = position; start <= maxStart; ++start)
+	{
+		groupBits = (sizeBits - (sizeBits >> groupSize)) >> start;
+		newBits = current | groupBits;
+
+		newPosition = start + groupSize + 1;
+
+		writtenBitsMask = sizeBits - (sizeBits >> newPosition);
+
+		/* Setting the bits within the range of the current partial permutation that are also solved
+			on the gameboard. */
+		compareMask = writtenBitsMask & subLine->maskBits;
+
+		/* Early pruning of branches that don't fit the mask and partial bits */
+		if ( ( (newBits & compareMask) ^ (subLine->partialBits & compareMask) ) != 0 )
+			continue;
+
+		generateSubLinePermutationsEnd(subLine, clueIndex - 1, newBits, sizeBits, countOnly, newPosition, permCount);
+
+		if (start >= subLine->size) break;
 	}
 }
 
@@ -204,6 +318,18 @@ int totalRemainingLengthEnd (Line * line, int clueIndex)
 
 	for (i = clueIndex; i >= 0; --i)
 		length += line->clueSet->clues[i];
+
+	length += clueIndex;
+
+	return length;
+}
+
+int totalRemainingLengthEndSubLine (SubLine * subLine, int clueIndex)
+{
+	int i, length = 0;
+
+	for (i = clueIndex; i >= 0; --i)
+		length += subLine->clueSet->clues[i];
 
 	length += clueIndex;
 
@@ -240,6 +366,29 @@ void updateBitMasks (Line * line, const int * partialSolution)
 	return;
 }
 
+void updateSubLineBitMasks (Line * line)
+{
+	uint64_t sizeBits = 1ULL << line->size;
+	uint64_t startMask = (1ULL << line->startEdge->size) - 1ULL;
+	uint64_t endMask = sizeBits - (sizeBits >> line->endEdge->size);
+
+	line->startEdge->partialBits = line->partialBits & startMask;
+	line->startEdge->maskBits 	 = line->maskBits & startMask;
+	line->endEdge->partialBits 	 = line->partialBits & endMask;
+	line->endEdge->maskBits 	 = line->maskBits & endMask;
+	return;
+}
+
+void updateBitMasksFromSubLines (Line * line)
+{
+	line->maskBits 	  |= line->startEdge->maskBits;
+	line->partialBits |= line->startEdge->partialBits;
+	line->maskBits 	  |= line->endEdge->maskBits;
+	line->partialBits |= line->endEdge->partialBits;
+
+	return;
+}
+
 /*
  * Filters out any stored permutations that are inconsistent with the current
  * maskBits and partialBits.
@@ -264,6 +413,34 @@ void filterPermutations (Line * line)
 	}
 					
 	return;
+}
+
+void filterSubLinePermutations (Line * line)
+{
+	int i;
+	uint64_t * perms   = line->startEdge->permutations;
+	uint64_t   mask    = line->startEdge->maskBits;
+	uint64_t   partial = line->startEdge->partialBits;
+	BitSet *   bSet    = line->startEdge->bitSet;
+
+	if (mask != 0)
+	{
+		for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
+			if ((perms[i] & mask) != partial)
+				clearBit(bSet, i);
+	}
+
+	perms 	= line->endEdge->permutations;
+	mask 	= line->endEdge->maskBits;
+	partial = line->endEdge->partialBits;
+	bSet 	= line->endEdge->bitSet;
+
+	if (mask != 0)
+	{
+		for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
+			if ((perms[i] & mask) != partial)
+				clearBit(bSet, i);
+	}
 }
 
 /*
@@ -304,6 +481,64 @@ void generateConsistentPattern (Line * line)
 	line->maskBits |= (solved1s | solved0s);
 	line->partialBits |= solved1s;
 	
+	return;
+}
+
+void generateSubLinesConsistentPattern (Line * line)
+{
+	int i;
+	BitSet * bSet		= line->startEdge->bitSet;
+	uint64_t * perms 	= line->startEdge->permutations;
+	uint64_t widthMask	= (1ULL << line->startEdge->size) - 1ULL;
+	uint64_t andMask 	= widthMask;
+	uint64_t orMask 	= 0ULL;
+	uint64_t sizeBits	= 1ULL << line->size;
+	uint64_t unsolved	= ~(line->startEdge->maskBits) & widthMask;
+	uint64_t solved1s, solved0s;
+
+	/* Looping through all valid permutations using the andMask to track which bits are always 1s
+		in every permutation and the orMask for 0s. Breaks early if there are no bits that are always
+		1 or 0 through all permutations */
+	for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
+	{
+		andMask &= perms[i];
+		orMask |= perms[i];
+
+		if (((andMask & unsolved) | (~orMask & unsolved)) == 0)
+			break;
+	}
+
+	solved1s = andMask & unsolved;
+	solved0s = ~orMask & unsolved;
+
+	line->startEdge->maskBits |= (solved1s | solved0s);
+	line->startEdge->partialBits |= solved1s;
+
+	bSet		= line->endEdge->bitSet;
+	perms 		= line->endEdge->permutations;
+	widthMask   = sizeBits - (sizeBits >> line->endEdge->size);
+	andMask		= widthMask;
+	orMask 		= 0ULL;
+	unsolved	= ~(line->endEdge->maskBits) & widthMask;
+	
+	/* Looping through all valid permutations using the andMask to track which bits are always 1s
+		in every permutation and the orMask for 0s. Breaks early if there are no bits that are always
+		1 or 0 through all permutations */
+	for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
+	{
+		andMask &= perms[i];
+		orMask |= perms[i];
+
+		if (((andMask & unsolved) | (~orMask & unsolved)) == 0)
+			break;
+	}
+
+	solved1s = andMask & unsolved;
+	solved0s = ~orMask & unsolved;
+
+	line->endEdge->maskBits |= (solved1s | solved0s);
+	line->endEdge->partialBits |= solved1s;
+
 	return;
 }
 

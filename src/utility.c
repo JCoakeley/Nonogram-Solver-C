@@ -62,7 +62,6 @@ void printLineDetails (Line * line)
 	BitSet * bSet = line->bitSet;
 	LineClue * lClue = line->clueSet;
 	printf("Line %d:\n", line->lineId);
-	printf("   Perm Count: %d\n", line->permutationCount);
 	printf("   Store Count: %d\n", line->storeCount);
 	printf("   Size: %d\n", line->size);
 	printf("   MaskBits: %lX\n", line->maskBits);
@@ -102,8 +101,8 @@ void printTimingData (Timings * timings)
 						+ (timings->solvingEnd.tv_nsec - timings->solvingStart.tv_nsec);
 	long overlapNanos 	= (timings->overlapEnd.tv_sec - timings->overlapStart.tv_sec) * 1000000000L 
 						+ (timings->overlapEnd.tv_nsec - timings->overlapStart.tv_nsec);
-	long countingNanos 	= (timings->countEnd.tv_sec - timings->countStart.tv_sec) * 1000000000L 
-						+ (timings->countEnd.tv_nsec - timings->countStart.tv_nsec);
+	long edgeNanos 		= (timings->edgeEnd.tv_sec - timings->edgeStart.tv_sec) * 1000000000L 
+						+ (timings->edgeEnd.tv_nsec - timings->edgeStart.tv_nsec);
 	long generateNanos 	= (timings->generationEnd.tv_sec - timings->generationStart.tv_sec) * 1000000000L 
 						+ (timings->generationEnd.tv_nsec - timings->generationStart.tv_nsec);
 	long filteringNanos = (timings->filteringEnd.tv_sec - timings->filteringStart.tv_sec) * 1000000000L 
@@ -131,9 +130,9 @@ void printTimingData (Timings * timings)
 	printFormattedTime(solvingNanos);
 	/* printf(": %ld", solvingNanos); */
 	
-	printf("\n\nCounting Permutations: ");
-	printFormattedTime(countingNanos);
-	/* printf(": %ld", countingNanos); */
+	printf("\n\nEdge Deduction: ");
+	printFormattedTime(edgeNanos);
+	/* printf(": %ld", edgeNanos); */
 	
 	printf("\nGenerate Permutations: ");
 	printFormattedTime(generateNanos);

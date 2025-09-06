@@ -24,13 +24,27 @@ typedef struct LineClue {
 	int clueCount;
 } LineClue;
 
+typedef struct SubLine {
+	int size;
+	int lineSize;
+	int permCount;
+	int storeCount;
+	BitSet * bitSet;
+	struct LineClue * clueSet;
+	uint64_t * permutations;
+	uint64_t partialBits;
+	uint64_t maskBits;
+	LineAllocState state;
+} SubLine;
+
 typedef struct Line {
 	int lineId;
-	int permutationCount;
 	int storeCount;
 	int size;
 	BitSet * bitSet;
-	struct LineClue * clueSet;
+	LineClue * clueSet;
+	SubLine * startEdge;
+	SubLine * endEdge;
 	uint64_t * permutations;
 	uint64_t partialBits;
 	uint64_t maskBits;

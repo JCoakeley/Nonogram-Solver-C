@@ -3,6 +3,9 @@
 #include <string.h>
 #include "../include/gameBoard.h"
 
+#define GENERATION_LIMIT 10000
+#define SOLVED_THRESHOLD 0.25
+
 /*
  * Main puzzle solving entry point.
  *
@@ -83,36 +86,10 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 					/* Update row BitMasks based on current gameBoard state */
 					updateBitMasks(solver.lines[i], solver.gameBoard + (i * width));
 
-					/* Count, allocate and store permutations if not done yet for the row */
+					/* Allocate, store and reallocate permutations if not done yet for the row */
 					if (solver.lines[i]->storeCount == 0)
 					{
-						timingStart(timings, INIT);
-						
-						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->maxPermutations);
-						if (solver.lines[i]->permutations == NULL)
-							goto free;
-
-						solver.lines[i]->state = LINE_ALLOC_PERMS;						
-
-						timingEnd(timings, INIT);
-						timingStart(timings, GENERATION);
-
-						/* Actually generate and store the permutations */
-						generatePermutations(solver.lines[i], FALSE, &(solver.lines[i]->storeCount));
-
-						timingEnd(timings, GENERATION);
-						timingStart(timings, INIT);
-
-						solver.lines[i]->permutations = (uint64_t *)realloc(solver.lines[i]->permutations, sizeof(uint64_t) * solver.lines[i]->storeCount);
-
-						solver.lines[i]->bitSet = newBitSet(solver.lines[i]->storeCount);
-						if (solver.lines[i]->bitSet == NULL)
-							goto free;
-
-						solver.lines[i]->state = LINE_ALLOC_ALL;
-						*totalPermutations += solver.lines[i]->storeCount;
-
-						timingEnd(timings, INIT);
+						generationDecision(solver.lines[i], timings, totalPermutations);
 					}
 
 					/* Only filter if permutations were already generated */
@@ -121,11 +98,11 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 						timingStart(timings, FILTERING);
 						filterPermutations(solver.lines[i]);
 						timingEnd(timings, FILTERING);
+
+						timingStart(timings, COMMON);
+						generateConsistentPattern(solver.lines[i]);
+						timingEnd(timings, COMMON);
 					}
-					
-					timingStart(timings, COMMON);
-					generateConsistentPattern(solver.lines[i]);
-					timingEnd(timings, COMMON);
 					
 					setGameBoardRow(solver.gameBoard, solver.lines[i], solver.columnsToUpdate);
 				}
@@ -143,36 +120,10 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 					getGameBoardColumn(solver.gameBoard, solver.columnPartialSolution, width, length, i - length);
 					updateBitMasks(solver.lines[i], solver.columnPartialSolution);
 
-					/* Count, allocate and store permutations if not done yet for the column */
+					/* Allocate, store and reallocate permutations if not done yet for the column */
 					if (solver.lines[i]->storeCount == 0)
 					{
-						timingStart(timings, INIT);
-
-						solver.lines[i]->permutations = (uint64_t *)malloc(sizeof(uint64_t) * solver.lines[i]->maxPermutations);
-						if (solver.lines[i]->permutations == NULL)
-							goto free;
-
-						solver.lines[i]->state = LINE_ALLOC_PERMS;
-
-						timingEnd(timings, INIT);
-						timingStart(timings, GENERATION);
-
-						/* Actually generate and store the permutations */
-						generatePermutations(solver.lines[i], FALSE, &(solver.lines[i]->storeCount));
-
-						timingEnd(timings, GENERATION);
-						timingStart(timings, INIT);
-
-						solver.lines[i]->permutations = (uint64_t *)realloc(solver.lines[i]->permutations, sizeof(uint64_t) * solver.lines[i]->storeCount);
-
-						solver.lines[i]->bitSet = newBitSet(solver.lines[i]->storeCount);
-						if (solver.lines[i]->bitSet == NULL)
-							goto free;
-
-						solver.lines[i]->state = LINE_ALLOC_ALL;
-						*totalPermutations += solver.lines[i]->storeCount;
-
-						timingEnd(timings, INIT);
+						generationDecision(solver.lines[i], timings, totalPermutations);
 					}
 
 					/* Only filter if permutations were already generated */
@@ -181,12 +132,12 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 						timingStart(timings, FILTERING);
 						filterPermutations(solver.lines[i]);
 						timingEnd(timings, FILTERING);
+
+						timingStart(timings, COMMON);
+						generateConsistentPattern(solver.lines[i]);
+						timingEnd(timings, COMMON);
 					}
-
-					timingStart(timings, COMMON);
-					generateConsistentPattern(solver.lines[i]);
-					timingEnd(timings, COMMON);
-
+					
 					setGameBoardColumn(solver.gameBoard, solver.lines[i], width, solver.rowsToUpdate);
 				}		
 			}
@@ -405,4 +356,95 @@ void freeResources (SolverContext * solver)
 	}
 
 	return;
+}
+
+char generationDecision (Line * line, Timings * timings, int * totalPermutations)
+{
+	uint64_t tempMaskBits = line->maskBits;
+	uint64_t tempPartialBits = line->partialBits;
+	
+	if (line->maxPermutations > GENERATION_LIMIT)
+	{
+		if (line->startEdge == NULL)
+		{
+			line->startEdge = createSubLine(line->clueSet, line->size);
+			if (line->startEdge == NULL) return FALSE;
+
+			line->endEdge = createSubLine(line->clueSet, line->size);
+			if (line->endEdge == NULL)
+			{
+				free(line->startEdge);
+				line->startEdge = NULL;
+				return FALSE;
+			}
+
+			updateSubLineBitMasks(line);
+
+			generateSubLinePermutationsStart(line->startEdge, 0, 0ULL, TRUE, 0, &(line->startEdge->permCount));
+			generateSubLinePermutationsEnd(line->endEdge, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, TRUE, 0, &(line->endEdge->permCount));
+
+			line->startEdge->permutations = (uint64_t *)malloc(sizeof(uint64_t) * line->startEdge->permCount);
+			line->startEdge->bitSet = newBitSet(line->startEdge->permCount);
+
+			line->endEdge->permutations = (uint64_t *)malloc(sizeof(uint64_t) * line->endEdge->permCount);
+			line->endEdge->bitSet = newBitSet(line->endEdge->permCount);
+
+			generateSubLinePermutationsStart(line->startEdge, 0, 0ULL, FALSE, 0, &(line->startEdge->storeCount));
+			generateSubLinePermutationsEnd(line->endEdge, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, FALSE, 0, &(line->endEdge->storeCount));
+
+			*totalPermutations += line->startEdge->storeCount;
+			*totalPermutations += line->endEdge->storeCount;
+		}
+
+		else
+		{
+			updateSubLineBitMasks(line);
+
+			filterSubLinePermutations(line);
+		}
+
+		generateSubLinesConsistentPattern (line);
+
+		updateBitMasksFromSubLines(line);
+
+		if (tempMaskBits != line->maskBits || tempPartialBits != line->partialBits)
+			return TRUE;
+
+		if ( (__builtin_popcountll(line->maskBits) / (float)line->size ) < SOLVED_THRESHOLD)
+			return TRUE;	
+	}
+
+	timingStart(timings, INIT);
+
+	line->permutations = (uint64_t *)malloc(sizeof(uint64_t) * line->maxPermutations);
+	if (line->permutations == NULL)
+		return FALSE;
+
+	line->state = LINE_ALLOC_PERMS;
+
+	timingEnd(timings, INIT);
+	timingStart(timings, GENERATION);
+
+	/* Actually generate and store the permutations */
+	generatePermutations(line, &(line->storeCount));
+
+	timingEnd(timings, GENERATION);
+	timingStart(timings, INIT);
+
+	line->permutations = (uint64_t *)realloc(line->permutations, sizeof(uint64_t) * line->storeCount);
+
+	line->bitSet = newBitSet(line->storeCount);
+	if (line->bitSet == NULL)
+		return FALSE;
+
+	line->state = LINE_ALLOC_ALL;
+	*totalPermutations += line->storeCount;
+
+	timingEnd(timings, INIT);
+
+	timingStart(timings, COMMON);
+	generateConsistentPattern(line);
+	timingEnd(timings, COMMON);
+
+	return TRUE;
 }

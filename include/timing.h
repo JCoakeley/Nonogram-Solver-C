@@ -9,7 +9,7 @@ typedef enum {
 	INIT,
 	OVERLAP,
 	SOLVING,
-	COUNTING,
+	EDGE_DEDUCTION,
 	GENERATION,
 	FILTERING,
 	COMMON
@@ -26,8 +26,8 @@ typedef struct {
 	struct timespec solvingEnd;
 	struct timespec totalStart;
 	struct timespec totalEnd;
-	struct timespec countStart;
-	struct timespec countEnd;
+	struct timespec edgeStart;
+	struct timespec edgeEnd;
 	struct timespec generationStart;
 	struct timespec generationEnd;
 	struct timespec filteringStart;

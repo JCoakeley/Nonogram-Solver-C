@@ -26,8 +26,8 @@ void timingStart (Timings * timings, TimingPoint timingPoint)
 			summationTiming(&timings->solvingStart);
 		break;
 
-		case COUNTING:
-			summationTiming(&timings->countStart);
+		case EDGE_DEDUCTION:
+			summationTiming(&timings->edgeStart);
 		break;
 
 		case GENERATION:
@@ -69,8 +69,8 @@ void timingEnd (Timings * timings, TimingPoint timingPoint)
 			summationTiming(&timings->solvingEnd);
 		break;
 
-		case COUNTING:
-			summationTiming(&timings->countEnd);
+		case EDGE_DEDUCTION:
+			summationTiming(&timings->edgeEnd);
 		break;
 
 		case GENERATION:

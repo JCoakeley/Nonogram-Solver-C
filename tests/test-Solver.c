@@ -9,7 +9,7 @@ int test_createLine (void)
 	int returnValue = 0;
 
 	int clues[] = {1, 1, 1};
-	LineClue lineclue = {(int *)&clues, 3};
+	LineClue lineclue = {clues, 3};
 
 	Line * line = createLine (&lineclue, 5, 0);
 
@@ -29,42 +29,48 @@ int test_generatePermutations_counting (void)
 {
 	int returnValue = 0;
 
+	uint64_t permutations1[6];
 	int clues1[] = {4, 3};
 	LineClue lineclue1 = {(int *)&clues1, 2};
 	Line * line1 = createLine (&lineclue1, 10, 0);
+	line1->permutations = permutations1;
 	/* 4 choose 2 */
 
+	uint64_t permutations2[220];
 	int clues2[] = {1, 3, 5};
 	LineClue lineclue2 = {(int *)&clues2, 3};
 	Line * line2 = createLine (&lineclue2, 20, 1);
+	line2->permutations = permutations2;
 	/* 12 choose 3 */
 
+	uint64_t permutations3[11628];
 	int clues3[] = {6, 3, 5, 1, 7};
 	LineClue lineclue3 = {(int *)&clues3, 5};
 	Line * line3 = createLine (&lineclue3, 40, 2);
+	line3->permutations = permutations3;
 	/* 19 choose 5 */
 
-	generatePermutations(line1, TRUE, &(line1->permutationCount));
+	generatePermutations(line1, &(line1->storeCount));
 
-	if (line1->permutationCount != 6)
+	if (line1->storeCount != 6)
 	{
-		printf("Test Failure: test_generatePermutations #1: Expected: 6, Actual: %d\n", line1->permutationCount);
+		printf("Test Failure: test_generatePermutations #1: Expected: 6, Actual: %d\n", line1->storeCount);
 		++returnValue;
 	}
 
-	generatePermutations(line2, TRUE, &(line2->permutationCount));
+	generatePermutations(line2, &(line2->storeCount));
 	
-	if (line2->permutationCount != 220)
+	if (line2->storeCount != 220)
 	{
-		printf("Test Failure: test_generatePermutations #2: Expected: 220, Actual: %d\n", line2->permutationCount);
+		printf("Test Failure: test_generatePermutations #2: Expected: 220, Actual: %d\n", line2->storeCount);
 		++returnValue;
 	}
 
-	generatePermutations(line3, TRUE, &(line3->permutationCount));
+	generatePermutations(line3, &(line3->storeCount));
 		
-	if (line3->permutationCount != 11628)
+	if (line3->storeCount != 11628)
 	{
-		printf("Test Failure: test_generatePermutations #3: Expected: 11628, Actual: %d\n", line3->permutationCount);
+		printf("Test Failure: test_generatePermutations #3: Expected: 11628, Actual: %d\n", line3->storeCount);
 		++returnValue;
 	}
 

@@ -1,8 +1,6 @@
 #include "../include/gameBoard.h"
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include "../include/utility.h"
 
 /*
  * TODO: May directly update a line struct's mask and partial bits from the gameboard
@@ -89,16 +87,17 @@ void printGameBoard (int * gameBoard, int width, int length)
  *   depending on the matching bit in partialBits.
  * - The corresponding column is marked as updated in columnsToUpdate[].
  */
-void setGameBoardRow (int * gameBoard, Line * line, int * columnsToUpdate)
+void setGameBoardRow (SolverContext * solver, int rowId)
 {
 	int i;
-	const int width = line->size;
-	const uint64_t maskBits = line->maskBits;
-	const uint64_t partialBits = line->partialBits;
+	const int width = solver->width;
+	const uint64_t maskBits = solver->lines[rowId]->maskBits;
+	const uint64_t partialBits = solver->lines[rowId]->partialBits;
 	uint64_t compareBit = 1ULL;
+	int * gameBoard = solver->gameBoard;
 
 	/* Move pointer to start of target row */
-	gameBoard += line->lineId * width;
+	gameBoard += rowId * width;
 
 	for (i = 0; i < width; ++i, compareBit <<= 1)
 	{
@@ -106,7 +105,7 @@ void setGameBoardRow (int * gameBoard, Line * line, int * columnsToUpdate)
 		if ((compareBit & maskBits) != 0 && gameBoard[i] == -1)
 		{
 			gameBoard[i] = ((compareBit & partialBits) == 0) ? 0 : 1;
-			columnsToUpdate[i] = 1;
+			solver->columnsToUpdateBits |= 1ULL << i;
 		}
 	}
 
@@ -121,21 +120,23 @@ void setGameBoardRow (int * gameBoard, Line * line, int * columnsToUpdate)
  *   depending on the matching bit in partialBits.
  * - The corresponding row is marked as updated in rowsToUpdate[].
  */
-void setGameBoardColumn (int * gameBoard, Line * line, int width, int * rowsToUpdate)
+void setGameBoardColumn (SolverContext * solver, int columnId)
 {
-	int i, index = line->lineId - width;
-	const int length = line->size;
-	const uint64_t maskBits = line->maskBits;
-	const uint64_t partialBits = line->partialBits;
+	int i, width = solver->width;
+	int index = columnId - width;
+	const int length = solver->length;
+	const uint64_t maskBits = solver->lines[columnId]->maskBits;
+	const uint64_t partialBits = solver->lines[columnId]->partialBits;
 	uint64_t compareBit = 1ULL;
+	
 
 	for (i = 0; i < length; ++i, compareBit <<= 1, index += width)
 	{
 		/* If this bit is marked as solved and the cell in the gameBoard is unsolved */
-		if ((compareBit & maskBits) != 0 && gameBoard[index] == -1)
+		if ((compareBit & maskBits) != 0 && solver->gameBoard[index] == -1)
 		{
-			gameBoard[index] = ((compareBit & partialBits) == 0) ? 0 : 1;
-			rowsToUpdate[i] = 1;
+			solver->gameBoard[index] = ((compareBit & partialBits) == 0) ? 0 : 1;
+			solver->rowsToUpdateBits |= 1ULL << i;
 		}
 	}
 

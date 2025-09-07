@@ -13,18 +13,18 @@ typedef enum {
 typedef enum {
 	FREE_NONE,
 	FREE_LINE_CLUES,
-	FREE_ROWS,
-	FREE_COLUMNS,
 	FREE_COLUMN_PARTIAL,
-	FREE_LINES
+	FREE_LINES,
+	FREE_SET_BIT_INDEXES
 } CleanupStage;
 
 typedef struct {
 	int width, length;
 	int * gameBoard;
-	int * rowsToUpdate;
-	int * columnsToUpdate;
+	uint64_t rowsToUpdateBits;
+	uint64_t columnsToUpdateBits;
 	int * columnPartialSolution;
+	int * setBitIndexes;
 	LineClue ** lineClues;
 	Line ** lines;
 	CleanupStage stage;
@@ -36,6 +36,8 @@ char puzzleSetup (FILE *, SolverContext *, Timings *);
 
 void freeResources (SolverContext *);
 
-char generationDecision (Line *, Timings *, int *);
+char generationDecision (Line *, Timings *, int *, int *);
+
+char lineGeneration (Line *, Timings *, int *, int *);
 
 #endif

@@ -90,38 +90,45 @@ void clearBit (BitSet * bitSet, int bit)
  */
 int nextSetBit (BitSet * bitSet, int startingBit)
 {
-	uint64_t targetWord;
-	int wordNum, bitNum, bitIndex = -1;
 	if (startingBit >= bitSet->bitCount) return -1;
 	
-	wordNum = startingBit >> 6;
-	bitNum = startingBit & 63;
-	
-	/* Mask out bits before startingBit in the current word */
-	targetWord = bitSet->words[wordNum] & (~0ULL << bitNum);
+	uint64_t * words = bitSet->words;
+	int wordNum = startingBit >> 6;
+	int bitNum = startingBit & 63;
+	uint64_t word = words[wordNum] & (~0ULL << bitNum);
 
-	if (targetWord != 0)
+	if (word != 0)
+		return (wordNum << 6) + __builtin_ctzll(word);
+
+	for (++wordNum; wordNum < bitSet->wordCount; ++wordNum)
 	{
-		/* Use builtin to find position of least-significant set bit */
-		bitIndex = (wordNum << 6) + __builtin_ctzll(targetWord);
-		return bitIndex;
+		word = words[wordNum];
+
+		if (word != 0)
+			return (wordNum << 6) + __builtin_ctzll(word);
 	}
-	++wordNum;
+	
+	return -1;
+}
 
-	/* Search remaining words until a set bit is found or end is reached */
-	while (wordNum < bitSet->wordCount)
+int allSetBits (BitSet * bSet, int * setBitIndexes)
+{
+	int setBitIndex = 0, setBitCount = 0, wordNum;
+	int wordCount = bSet->wordCount;
+	uint64_t * words = bSet->words;
+	uint64_t word;
+
+	for (wordNum = 0; wordNum < wordCount; ++wordNum)
 	{
-		targetWord = bitSet->words[wordNum];
-
-		if (targetWord != 0)
-		{
-			/* Use builtin to find position of least-significant set bit */
-			bitIndex = (wordNum << 6) + __builtin_ctzll(targetWord);
-			return bitIndex;
-		}
+		word = words[wordNum];
 		
-		++wordNum;
-	}
+		while (word != 0)
+		{
+			setBitIndex = (wordNum << 6) + __builtin_ctzll(word);
+			word &= word - 1;
+			setBitIndexes[setBitCount++] = setBitIndex;
+		}	
+	} 
 	
-	return bitIndex;
+	return setBitCount;
 }

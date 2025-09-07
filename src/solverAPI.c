@@ -1,10 +1,17 @@
-#include "../include/solverAPI.h"
 #include <stdlib.h>
 #include <string.h>
 #include "../include/gameBoard.h"
 
 #define GENERATION_LIMIT 10000
-#define SOLVED_THRESHOLD 0.25
+#define SOLVED_THRESHOLD 0.30
+
+/*
+ * TODO: Free SubLine allocated memory.
+ * 
+ * TODO: Add force generation if no rows/columns to update.
+ *
+ * TODO: Test for best generation limit, solved threshold and subline max size.
+ */
 
 /*
  * Main puzzle solving entry point.
@@ -59,14 +66,14 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 		for (i = 0; i < length; ++i)
 		{
 			overlap(solver.lines[i]);
-			setGameBoardRow(solver.gameBoard, solver.lines[i], solver.columnsToUpdate);
+			setGameBoardRow(&solver, i);
 			*maxPermutations += solver.lines[i]->maxPermutations;
 		}
 
 		for ( ; i < width + length; ++i)
 		{
 			overlap(solver.lines[i]);
-			setGameBoardColumn(solver.gameBoard, solver.lines[i], width, solver.rowsToUpdate);
+			setGameBoardColumn(&solver, i);
 			*maxPermutations += solver.lines[i]->maxPermutations;
 		}
 
@@ -78,18 +85,44 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 		{
 			++(*iterations);
 
-			/* --- Row solving pass --- */
-			for (i = 0; i < length; ++i)
+			if (solver.rowsToUpdateBits == 0)
 			{
-				if (solver.rowsToUpdate[i] == 1)
+				int j = -1;
+
+				for (i = 0; i < length; ++i)
 				{
+					if (solver.lines[i]->storeCount == 0)
+					{
+						if (j == -1)
+							j = i;
+
+						else if (solver.lines[i]->maxPermutations < solver.lines[j]->maxPermutations)
+							j = i;
+					}
+				}
+
+				if (j > -1)
+				{
+					if (!lineGeneration(solver.lines[j], timings, totalPermutations, solver.setBitIndexes))
+						goto free;
+				}
+			}
+
+			else
+			{
+				do
+				{
+					i = __builtin_ctzll(solver.rowsToUpdateBits);
+					solver.rowsToUpdateBits &= ~(1ULL << i);
+
 					/* Update row BitMasks based on current gameBoard state */
 					updateBitMasks(solver.lines[i], solver.gameBoard + (i * width));
 
 					/* Allocate, store and reallocate permutations if not done yet for the row */
 					if (solver.lines[i]->storeCount == 0)
 					{
-						generationDecision(solver.lines[i], timings, totalPermutations);
+						if (!generationDecision(solver.lines[i], timings, totalPermutations, solver.setBitIndexes))
+							goto free;
 					}
 
 					/* Only filter if permutations were already generated */
@@ -104,18 +137,43 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 						timingEnd(timings, COMMON);
 					}
 					
-					setGameBoardRow(solver.gameBoard, solver.lines[i], solver.columnsToUpdate);
+					setGameBoardRow(&solver, i);
+					
+				} while (solver.rowsToUpdateBits != 0);
+				
+			}
+
+			if (solver.columnsToUpdateBits == 0)
+			{
+				int j = -1;
+
+				for (i = length; i < length + width; ++i)
+				{
+					if (solver.lines[i]->storeCount == 0)
+					{
+						if (j == -1)
+							j = i;
+
+						else if (solver.lines[i]->maxPermutations < solver.lines[j]->maxPermutations)
+							j = i;
+					}
+				}
+
+				if (j > -1)
+				{
+					if (!lineGeneration(solver.lines[j], timings, totalPermutations, solver.setBitIndexes))
+						goto free;
 				}
 			}
 
-			/* Reset row update flags for next pass */
-			memset(solver.rowsToUpdate, 0x00, sizeof(int) * length);
-
-			/* --- Column solving pass --- */
-			for ( ; i < width + length; ++i)
+			else
 			{
-				if (solver.columnsToUpdate[i - length] == 1)
+				do
 				{
+					i = __builtin_ctzll(solver.columnsToUpdateBits);
+					solver.columnsToUpdateBits &= ~(1ULL << i);
+					i += length;
+
 					/* Retrieve column's current gameBoard state and update the BitMasks based on this */
 					getGameBoardColumn(solver.gameBoard, solver.columnPartialSolution, width, length, i - length);
 					updateBitMasks(solver.lines[i], solver.columnPartialSolution);
@@ -123,7 +181,8 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 					/* Allocate, store and reallocate permutations if not done yet for the column */
 					if (solver.lines[i]->storeCount == 0)
 					{
-						generationDecision(solver.lines[i], timings, totalPermutations);
+						if (!generationDecision(solver.lines[i], timings, totalPermutations, solver.setBitIndexes))
+							goto free;
 					}
 
 					/* Only filter if permutations were already generated */
@@ -138,12 +197,10 @@ int * solvePuzzle (FILE * filePtr, SolvingMode mode, int * iterations, int * tot
 						timingEnd(timings, COMMON);
 					}
 					
-					setGameBoardColumn(solver.gameBoard, solver.lines[i], width, solver.rowsToUpdate);
-				}		
+					setGameBoardColumn(&solver, i);
+					
+				} while (solver.columnsToUpdateBits != 0);
 			}
-
-			/* Reset column update flags for next pass */
-			memset(solver.columnsToUpdate, 0x00, sizeof(int) * width);
 		}
 
 		if (loop > 1)
@@ -186,16 +243,17 @@ free:
 char puzzleSetup (FILE * filePtr, SolverContext * solver, Timings * timings)
 {
 	int i, width = 0, length = 0;
+	uint64_t maxPermutation = 0;
 
-	solver->width = 0;
-	solver->length = 0;
-	solver->gameBoard = NULL;
-	solver->rowsToUpdate = NULL;
-	solver->columnsToUpdate = NULL;
+	solver->width 				  = 0;
+	solver->length 		  		  = 0;
+	solver->gameBoard 			  = NULL;
+	solver->rowsToUpdateBits 	  = 0ULL;
+	solver->columnsToUpdateBits   = 0ULL;
 	solver->columnPartialSolution = NULL;
-	solver->lineClues = NULL;
-	solver->lines = NULL;
-	solver->stage = FREE_NONE;
+	solver->lineClues 			  = NULL;
+	solver->lines 				  = NULL;
+	solver->stage 				  = FREE_NONE;
 
 	/* Parse clues from file and get puzzle dimensions */
 	solver->lineClues = readFile(filePtr, &width, &length);
@@ -204,20 +262,6 @@ char puzzleSetup (FILE * filePtr, SolverContext * solver, Timings * timings)
 
 	timingEnd(timings, FILEREADING);
 	timingStart(timings, INIT);
-	
-	/* Allocate row update tracking */
-	solver->rowsToUpdate = (int *)calloc(length, sizeof(int));
-	if (solver->rowsToUpdate == NULL)
-		return FALSE;
-
-	solver->stage = FREE_ROWS;
-
-	/* Allocate column update tracking */
-	solver->columnsToUpdate = (int *)calloc(width, sizeof(int));
-	if (solver->columnsToUpdate == NULL)
-		return FALSE;
-
-	solver->stage = FREE_COLUMNS;
 
 	/* Allocate temporary buffer to hold a column's current state */
 	solver->columnPartialSolution = (int *)calloc(length, sizeof(int));
@@ -243,7 +287,10 @@ char puzzleSetup (FILE * filePtr, SolverContext * solver, Timings * timings)
 		solver->lines[i] = createLine(solver->lineClues[i], width, i);
 
 		if (solver->lines[i] == NULL)
-			return FALSE;			
+			return FALSE;
+
+		if (solver->lines[i]->maxPermutations > maxPermutation)
+			maxPermutation = solver->lines[i]->maxPermutations;	
 	}
 
 	/* Create Line structs for each column */
@@ -253,7 +300,16 @@ char puzzleSetup (FILE * filePtr, SolverContext * solver, Timings * timings)
 
 		if (solver->lines[i] == NULL)
 			return FALSE;
+
+		if (solver->lines[i]->maxPermutations > maxPermutation)
+			maxPermutation = solver->lines[i]->maxPermutations;
 	}
+
+	solver->setBitIndexes = (int *)malloc(sizeof(int) * maxPermutation);
+	if (solver->setBitIndexes == NULL)
+		return FALSE;
+
+	solver->stage = FREE_SET_BIT_INDEXES;
 
 	/* Finalize width and length now that all allocations succeeded */
 	solver->width = width;
@@ -289,11 +345,56 @@ void freeResources (SolverContext * solver)
 	
 	switch (solver->stage)
 	{
+		case FREE_SET_BIT_INDEXES:
+			free(solver->setBitIndexes);
+			solver->setBitIndexes = NULL;
+			/* Fall through */
+			
 		case FREE_LINES:
 			for (i = 0; i < totalClues; ++i)
 			{
 				/* Lines are allocated sequentially — a NULL line indicates end of valid data. */
 				if (solver->lines[i] == NULL) break;
+
+				if (solver->lines[i]->startEdge != NULL)
+					switch (solver->lines[i]->startEdge->state)
+					{
+						case LINE_ALLOC_ALL:
+							free(solver->lines[i]->startEdge->bitSet->words);						
+							free(solver->lines[i]->startEdge->bitSet);
+							solver->lines[i]->startEdge->bitSet = NULL;
+							/* Fall through */
+
+						case LINE_ALLOC_PERMS:
+							free(solver->lines[i]->startEdge->permutations);
+							solver->lines[i]->startEdge->permutations = NULL;
+							/* Fall through */
+
+						case LINE_ALLOC_NONE:
+							free(solver->lines[i]->startEdge);
+							solver->lines[i]->startEdge = NULL;
+							break;
+					}
+
+				if (solver->lines[i]->endEdge != NULL)
+					switch (solver->lines[i]->endEdge->state)
+					{
+						case LINE_ALLOC_ALL:
+							free(solver->lines[i]->endEdge->bitSet->words);						
+							free(solver->lines[i]->endEdge->bitSet);
+							solver->lines[i]->endEdge->bitSet = NULL;
+							/* Fall through */
+
+						case LINE_ALLOC_PERMS:
+							free(solver->lines[i]->endEdge->permutations);
+							solver->lines[i]->endEdge->permutations = NULL;
+							/* Fall through */
+
+						case LINE_ALLOC_NONE:
+							free(solver->lines[i]->endEdge);
+							solver->lines[i]->endEdge = NULL;
+							break;
+					}
 
 				/* Free line-specific allocations based on what succeeded */
 				switch (solver->lines[i]->state)
@@ -310,11 +411,10 @@ void freeResources (SolverContext * solver)
 						/* Fall through */
 				
 					case LINE_ALLOC_NONE:
+						free(solver->lines[i]);
+						solver->lines[i] = NULL;
 						break;
 				}
-
-				free(solver->lines[i]);
-				solver->lines[i] = NULL;
 			}
 
 			free(solver->lines);
@@ -324,16 +424,6 @@ void freeResources (SolverContext * solver)
 		case FREE_COLUMN_PARTIAL:
 			free(solver->columnPartialSolution);
 			solver->columnPartialSolution = NULL;
-			/* Fall through */
-	
-		case FREE_COLUMNS:
-			free(solver->columnsToUpdate);
-			solver->columnsToUpdate = NULL;
-			/* Fall through */
-	
-		case FREE_ROWS:
-			free(solver->rowsToUpdate);
-			solver->rowsToUpdate = NULL;
 			/* Fall through */
 	
 		case FREE_LINE_CLUES:
@@ -358,36 +448,51 @@ void freeResources (SolverContext * solver)
 	return;
 }
 
-char generationDecision (Line * line, Timings * timings, int * totalPermutations)
+char generationDecision (Line * line, Timings * timings, int * totalPermutations, int * setBitIndexes)
 {
 	uint64_t tempMaskBits = line->maskBits;
 	uint64_t tempPartialBits = line->partialBits;
 	
 	if (line->maxPermutations > GENERATION_LIMIT)
 	{
+		timingStart(timings, EDGE_DEDUCTION);
+	
 		if (line->startEdge == NULL)
 		{
 			line->startEdge = createSubLine(line->clueSet, line->size);
 			if (line->startEdge == NULL) return FALSE;
 
 			line->endEdge = createSubLine(line->clueSet, line->size);
-			if (line->endEdge == NULL)
-			{
-				free(line->startEdge);
-				line->startEdge = NULL;
-				return FALSE;
-			}
+			if (line->endEdge == NULL) return FALSE;
 
 			updateSubLineBitMasks(line);
 
 			generateSubLinePermutationsStart(line->startEdge, 0, 0ULL, TRUE, 0, &(line->startEdge->permCount));
 			generateSubLinePermutationsEnd(line->endEdge, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, TRUE, 0, &(line->endEdge->permCount));
-
+	
 			line->startEdge->permutations = (uint64_t *)malloc(sizeof(uint64_t) * line->startEdge->permCount);
-			line->startEdge->bitSet = newBitSet(line->startEdge->permCount);
+			if (line->startEdge->permutations == NULL) 
+				return FALSE;
 
+			line->startEdge->state = LINE_ALLOC_PERMS;
+			
+			line->startEdge->bitSet = newBitSet(line->startEdge->permCount);
+			if (line->startEdge->bitSet == NULL)
+				return FALSE;
+
+			line->startEdge->state = LINE_ALLOC_ALL;
+			
 			line->endEdge->permutations = (uint64_t *)malloc(sizeof(uint64_t) * line->endEdge->permCount);
+			if (line->endEdge->permutations == NULL) 
+				return FALSE;
+
+			line->endEdge->state = LINE_ALLOC_PERMS;
+			
 			line->endEdge->bitSet = newBitSet(line->endEdge->permCount);
+			if (line->endEdge->bitSet == NULL)
+				return FALSE;
+
+			line->endEdge->state = LINE_ALLOC_ALL;
 
 			generateSubLinePermutationsStart(line->startEdge, 0, 0ULL, FALSE, 0, &(line->startEdge->storeCount));
 			generateSubLinePermutationsEnd(line->endEdge, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, FALSE, 0, &(line->endEdge->storeCount));
@@ -407,6 +512,8 @@ char generationDecision (Line * line, Timings * timings, int * totalPermutations
 
 		updateBitMasksFromSubLines(line);
 
+		timingEnd(timings, EDGE_DEDUCTION);
+
 		if (tempMaskBits != line->maskBits || tempPartialBits != line->partialBits)
 			return TRUE;
 
@@ -414,6 +521,11 @@ char generationDecision (Line * line, Timings * timings, int * totalPermutations
 			return TRUE;	
 	}
 
+	return lineGeneration(line, timings, totalPermutations, setBitIndexes);
+}
+
+char lineGeneration (Line * line, Timings * timings, int * totalPermutations, int * setBitIndexes)
+{
 	timingStart(timings, INIT);
 
 	line->permutations = (uint64_t *)malloc(sizeof(uint64_t) * line->maxPermutations);
@@ -438,6 +550,9 @@ char generationDecision (Line * line, Timings * timings, int * totalPermutations
 		return FALSE;
 
 	line->state = LINE_ALLOC_ALL;
+
+	line->setBitIndexes = setBitIndexes;
+		
 	*totalPermutations += line->storeCount;
 
 	timingEnd(timings, INIT);

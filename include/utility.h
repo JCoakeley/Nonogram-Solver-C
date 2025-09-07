@@ -42,6 +42,7 @@ typedef struct Line {
 	int storeCount;
 	int size;
 	BitSet * bitSet;
+	int * setBitIndexes;
 	LineClue * clueSet;
 	SubLine * startEdge;
 	SubLine * endEdge;

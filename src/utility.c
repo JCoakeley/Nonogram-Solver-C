@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "../include/timing.h"
 
 /*
  * Allocates and initializes a LineClue struct from the provided buffer of clue integers.

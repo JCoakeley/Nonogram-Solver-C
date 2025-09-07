@@ -17,4 +17,6 @@ void clearBit (BitSet *, int);
 
 int nextSetBit (BitSet *, int);
 
+int allSetBits (BitSet *, int *);
+
 #endif

@@ -33,6 +33,7 @@ Line * createLine (LineClue * clues, int size, int lineId)
 	line->partialBits 		= 0ULL;
 	line->maxPermutations	= nCr(n, clues->clueCount);
 	line->bitSet 			= NULL;
+	line->setBitIndexes		= NULL;
 	line->permutations 		= NULL;
 	line->startEdge			= NULL;
 	line->endEdge			= NULL;
@@ -48,7 +49,7 @@ SubLine * createSubLine (LineClue * clues, int lineSize)
 
 	if (subLine == NULL) return subLine;
 	
-	subLine->size 			= (lineSize / 2) < 20 ? (lineSize / 2) : 20;
+	subLine->size 			= (lineSize / 2) < 15 ? (lineSize / 2) : 15;
 	subLine->lineSize		= lineSize;
 	subLine->permCount		= 0;
 	subLine->storeCount 	= 0;
@@ -403,13 +404,15 @@ void filterPermutations (Line * line)
 	uint64_t * const perms 	= line->permutations;
 	const uint64_t 	mask 	= line->maskBits;
 	const uint64_t 	partial = line->partialBits;
-	BitSet * const 	bSet 	= line->bitSet;
+	BitSet * const bSet		= line->bitSet;
+	const int setBitCount 	= allSetBits(bSet, line->setBitIndexes);
+	const int * setBitIndexes = line->setBitIndexes;
 
 	if (mask != 0)
 	{
-		for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
-			if ((perms[i] & mask) != partial)
-				clearBit(bSet, i);
+		for (i = 0; i < setBitCount; ++i)
+			if ((perms[setBitIndexes[i]] & mask) != partial)
+				clearBit(bSet, setBitIndexes[i]);
 	}
 					
 	return;
@@ -456,6 +459,8 @@ void generateConsistentPattern (Line * line)
 {
 	int i;
 	BitSet * const bSet		= line->bitSet;
+	const int setBitCount 	= allSetBits(bSet, line->setBitIndexes);
+	const int * setBitIndexes = line->setBitIndexes;
 	uint64_t * const perms 	= line->permutations;
 	uint64_t widthMask 		= (1ULL << line->size) - 1ULL;
 	uint64_t andMask 		= widthMask;
@@ -466,10 +471,10 @@ void generateConsistentPattern (Line * line)
 	/* Looping through all valid permutations using the andMask to track which bits are always 1s
 		in every permutation and the orMask for 0s. Breaks early if there are no bits that are always
 		1 or 0 through all permutations */
-	for (i = nextSetBit(bSet, 0); i >= 0; i = nextSetBit(bSet, i + 1))
+	for (i = 0; i < setBitCount; ++i)
 	{
-		andMask &= perms[i];
-		orMask |= perms[i];
+		andMask &= perms[setBitIndexes[i]];
+		orMask |= perms[setBitIndexes[i]];
 
 		if (((andMask & unsolved) | (~orMask & unsolved)) == 0)
 			break;

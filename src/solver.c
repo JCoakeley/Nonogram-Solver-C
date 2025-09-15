@@ -76,54 +76,68 @@ void generatePermutations (Line * line, int * permCount)
 }
 
 /*
- * Recursively generates all valid permutations of a line that are consistent with
- * the current maskBits and partialBits. Generates permutations from the first clue
- * to the last clue ie Direction Start.
+ * Recursively generates all valid permutations of a line in the "start" direction 
+ * (i.e., placing clues from left to right) that are consistent with known solved cells.
+ *
+ * Each valid permutation is stored in line->permutations, and the write index is
+ * incremented via the permCount pointer.
  *
  * Parameters:
- * - line: The Line being solved
- * - clueIndex: Index of the clue currently being placed
- * - current: Current state of the permutation (bit pattern)
- * - position: Starting position for placing the next clue
- * - countOnly: If true, only counts permutations without storing them
- * - permCount: Pointer to either count or index for storing
+ * - line:       The Line being solved (contains clues, maskBits, partialBits, etc.)
+ * - clueIndex:  Index of the clue currently being placed
+ * - current:    Current working bit-pattern representing the partial permutation
+ * - position:   Index at which the next clue may begin
+ * - permCount:  Pointer to the current write index in line->permutations
  *
- * Early-prunes branches that conflict with known solved cells using bitmask checks.
+ * Notes:
+ * - The final clue is placed and immediately stored without recursion for speed.
+ * - Early pruning eliminates permutations that conflict with known solved cells.
+ * - It is assumed that line->permutations is already malloc'd to maxPerms capacity.
  */
 void generatePermutationsStart (Line * line, int clueIndex, uint64_t current, int position, int * permCount)
 {
 	int groupSize, maxStart, newPosition, start;
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
 
-	/* Base Case: All clues placed in the permutation */
-	if (clueIndex >= line->clueSet->clueCount)
+	groupSize = line->clueSet->clues[clueIndex];
+	maxStart = line->size - totalRemainingLengthStart(line, clueIndex);
+	groupBits = ((1ULL << groupSize) - 1ULL) << position;
+
+	/* Base Case: Last clue — no further recursion required */
+	if (clueIndex >= line->clueSet->clueCount - 1)
 	{
-		line->permutations[(*permCount)++] = current;
+		/* Try all valid placements of the last clue */
+		for ( ; position <= maxStart; ++position, groupBits <<= 1)
+		{
+			newBits = current | groupBits;
+
+			/* Only accept permutations that exactly match the known solved cells */
+			if ( (newBits & line->maskBits) == line->partialBits)
+				line->permutations[(*permCount)++] = newBits;
+		}
 
 		return;
 	}
-	
-	groupSize = line->clueSet->clues[clueIndex];
-	maxStart = line->size - totalRemainingLengthStart(line, clueIndex);
 
-	/* Looping through each possible valid place for a specific clue within the permutation. */
-	for (start = position; start <= maxStart; ++start)
+	/* Recursive Case: Place current clue, then recurse for the next */
+
+	/* Try all valid placements of the current clue */
+	for (start = position; start <= maxStart; ++start, groupBits <<= 1)
 	{
-		groupBits = ((1ULL << groupSize) - 1ULL) << start;
 		newBits = current | groupBits;
-
 		newPosition = start + groupSize + 1;
 
+		/* Bits written so far (up to and including a space after this clue) */
 		writtenBitsMask = (1ULL << newPosition) - 1ULL;
 
-		/* Setting the bits within the range of the current partial permutation that are also solved
-			on the gameboard. */
+		/* Determine which known cells (from maskBits) are within the written region */
 		compareMask = writtenBitsMask & line->maskBits;
 
-		/* Early pruning of branches that don't fit the mask and partial bits */
-		if ( ( (newBits & compareMask) ^ (line->partialBits & compareMask) ) != 0 )
+		/* Early pruning: Skip if partial solution conflicts with known cells */
+		if ( (newBits & compareMask) != (line->partialBits & compareMask) )
 			continue;
 
+		/* Recurse to place the next clue */
 		generatePermutationsStart(line, clueIndex + 1, newBits, newPosition, permCount);
 	}
 }
@@ -137,7 +151,7 @@ void generateSubLinePermutationsStart (SubLine * subLine, int clueIndex, uint64_
 	if (clueIndex >= subLine->clueSet->clueCount || position >= subLine->size)
 	{
 		/* Only counting or storing permutations that fit the mask and partial bits */
-		if (((current & subLine->maskBits) ^ subLine->partialBits) == 0)
+		if ( (current & subLine->maskBits) == subLine->partialBits)
 		{
 			if (countOnly)
 				++(*permCount);
@@ -167,7 +181,7 @@ void generateSubLinePermutationsStart (SubLine * subLine, int clueIndex, uint64_
 		compareMask = writtenBitsMask & subLine->maskBits;
 
 		/* Early pruning of branches that don't fit the mask and partial bits */
-		if ( ( (newBits & compareMask) ^ (subLine->partialBits & compareMask) ) != 0 )
+		if ( (newBits & compareMask) != (subLine->partialBits & compareMask) )
 			continue;
 
 		generateSubLinePermutationsStart(subLine, clueIndex + 1, newBits, countOnly, newPosition, permCount);
@@ -207,54 +221,69 @@ int totalRemainingLengthStartSubLine (SubLine * subLine, int clueIndex)
 }
 
 /*
- * Recursively generates all valid permutations of a line that are consistent with
- * the current maskBits and partialBits. Generates permutations from the first clue
- * to the last clue ie Direction Start.
+ * Recursively generates all valid permutations of a line in the "end" direction 
+ * (i.e., placing clues from right to left) that are consistent with known solved cells.
+ *
+ * Each valid permutation is stored in line->permutations, and the write index is
+ * incremented via the permCount pointer.
  *
  * Parameters:
- * - line: The Line being solved
- * - clueIndex: Index of the clue currently being placed
- * - current: Current state of the permutation (bit pattern)
- * - position: Starting position for placing the next clue
- * - countOnly: If true, only counts permutations without storing them
- * - permCount: Pointer to either count or index for storing
+ * - line:       The Line being solved (contains clues, maskBits, partialBits, etc.)
+ * - clueIndex:  Index of the clue currently being placed
+ * - current:    Current working bit-pattern representing the partial permutation
+ * - sizeBits:	 A set bit at the size of the line, used as an index point for building masks
+ * - position:   Index at which the next clue may begin
+ * - permCount:  Pointer to the current write index in line->permutations
  *
- * Early-prunes branches that conflict with known solved cells using bitmask checks.
+ * Notes:
+ * - The final clue is placed and immediately stored without recursion for speed.
+ * - Early pruning eliminates permutations that conflict with known solved cells.
+ * - It is assumed that line->permutations is already malloc'd to maxPerms capacity.
  */
 void generatePermutationsEnd (Line * line, int clueIndex, uint64_t current, uint64_t sizeBits, int position, int * permCount)
 {
 	int groupSize, maxStart, newPosition, start;
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
 
-	/* Base Case: All clues placed in the permutation */
-	if (clueIndex < 0)
+	groupSize = line->clueSet->clues[clueIndex];
+	maxStart = line->size - totalRemainingLengthEnd(line, clueIndex);
+	groupBits = (sizeBits - (sizeBits >> groupSize)) >> position;
+
+	/* Base Case: Last clue — no further recursion required */
+	if (clueIndex < 1)
 	{
-		line->permutations[(*permCount)++] = current;
+		/* Try all valid placements of the last clue */
+		for ( ; position <= maxStart; ++position, groupBits >>= 1)
+		{
+			newBits = current | groupBits;
+
+			/* Only accept permutations that exactly match the known solved cells */
+			if ( (newBits & line->maskBits) == line->partialBits)
+				line->permutations[(*permCount)++] = newBits;
+		}
 
 		return;
 	}
 	
-	groupSize = line->clueSet->clues[clueIndex];
-	maxStart = line->size - totalRemainingLengthEnd(line, clueIndex);
+	/* Recursive Case: Place current clue, then recurse for the next */
 
-	/* Looping through each possible valid place for a specific clue within the permutation. */
-	for (start = position; start <= maxStart; ++start)
+	/* Try all valid placements of the current clue */
+	for (start = position; start <= maxStart; ++start, groupBits >>= 1)
 	{
-		groupBits = (sizeBits - (sizeBits >> groupSize)) >> start;
 		newBits = current | groupBits;
-
 		newPosition = start + groupSize + 1;
 
+		/* Bits written so far (up to and including a space after this clue) */
 		writtenBitsMask = sizeBits - (sizeBits >> newPosition);
 
-		/* Setting the bits within the range of the current partial permutation that are also solved
-			on the gameboard. */
+		/* Determine which known cells (from maskBits) are within the written region */
 		compareMask = writtenBitsMask & line->maskBits;
 
 		/* Early pruning of branches that don't fit the mask and partial bits */
-		if ( ( (newBits & compareMask) ^ (line->partialBits & compareMask) ) != 0 )
+		if ( (newBits & compareMask) != (line->partialBits & compareMask) )
 			continue;
 
+		/* Recurse to place the next clue */
 		generatePermutationsEnd(line, clueIndex - 1, newBits, sizeBits, newPosition, permCount);
 	}
 }
@@ -268,7 +297,7 @@ void generateSubLinePermutationsEnd (SubLine * subLine, int clueIndex, uint64_t 
 	if (clueIndex < 0 || position >= subLine->size)
 	{
 		/* Only counting or storing permutations that fit the mask and partial bits */
-		if (((current & subLine->maskBits) ^ subLine->partialBits) == 0)
+		if ( (current & subLine->maskBits) == subLine->partialBits)
 		{
 			if (countOnly)
 				++(*permCount);
@@ -297,8 +326,8 @@ void generateSubLinePermutationsEnd (SubLine * subLine, int clueIndex, uint64_t 
 			on the gameboard. */
 		compareMask = writtenBitsMask & subLine->maskBits;
 
-		/* Early pruning of branches that don't fit the mask and partial bits */
-		if ( ( (newBits & compareMask) ^ (subLine->partialBits & compareMask) ) != 0 )
+		/* Early pruning: Skip if partial solution conflicts with known cells */
+		if ( (newBits & compareMask) != (subLine->partialBits & compareMask) )
 			continue;
 
 		generateSubLinePermutationsEnd(subLine, clueIndex - 1, newBits, sizeBits, countOnly, newPosition, permCount);

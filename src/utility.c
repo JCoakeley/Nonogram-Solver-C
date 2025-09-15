@@ -36,6 +36,15 @@ LineClue * createLineClueSet(int * clueBuffer, int clueCount)
 		return NULL;
 	}
 
+	lineClueSet->maxStart = (int *)malloc(sizeof(int) * clueCount);
+
+	if (lineClueSet->maxStart == NULL)
+	{
+		free(lineClueSet->clues);
+		free(lineClueSet);
+		return NULL;
+	}
+
 	/* Copying integers from the buffer up to the specified count */
 	for (i = 0; i < clueCount; ++i)
 		lineClueSet->clues[i] = clueBuffer[i];

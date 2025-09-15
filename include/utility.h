@@ -21,6 +21,7 @@ typedef enum {
 
 typedef struct LineClue {
 	int * clues;
+	int * maxStart;
 	int clueCount;
 } LineClue;
 

@@ -7,13 +7,17 @@ Line * createLine (struct LineClue *, int, int);
 
 SubLine * createSubLine (struct LineClue *, int);
 
-void generatePermutations (Line *, int *);
+void generatePermutations (Line *);
 
 void generatePermutationsStart (Line *, int, uint64_t, int, int *);
 
 void generateSubLinePermutationsStart (SubLine *, int, uint64_t, char, int, int *);
 
 int totalRemainingLengthStart (Line *, int);
+
+void genStartMaxStart (LineClue *, int);
+
+void genEndMaxStart (LineClue *, int);
 
 int totalRemainingLengthStartSubLine (SubLine *, int);
 

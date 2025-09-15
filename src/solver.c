@@ -63,16 +63,22 @@ SubLine * createSubLine (LineClue * clues, int lineSize)
 	return subLine;
 }
 
-void generatePermutations (Line * line, int * permCount)
+void generatePermutations (Line * line)
 {
 	if (line->genDirection == DIRECTION_NONE)
 		generationDirection(line);
 
 	if (line->genDirection == DIRECTION_START)
-		generatePermutationsStart(line, 0, 0ULL, 0, permCount);
+	{
+		genStartMaxStart(line->clueSet, line->size);
+		generatePermutationsStart(line, 0, 0ULL, 0, &(line->storeCount));
+	}
 
 	else
-		generatePermutationsEnd(line, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, 0, permCount);
+	{
+		genEndMaxStart(line->clueSet, line->size);
+		generatePermutationsEnd(line, line->clueSet->clueCount - 1, 0ULL, 1ULL << line->size, 0, &(line->storeCount));
+	}
 }
 
 /*
@@ -100,7 +106,7 @@ void generatePermutationsStart (Line * line, int clueIndex, uint64_t current, in
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
 
 	groupSize = line->clueSet->clues[clueIndex];
-	maxStart = line->size - totalRemainingLengthStart(line, clueIndex);
+	maxStart = line->clueSet->maxStart[clueIndex];
 	groupBits = ((1ULL << groupSize) - 1ULL) << position;
 
 	/* Base Case: Last clue — no further recursion required */
@@ -190,22 +196,26 @@ void generateSubLinePermutationsStart (SubLine * subLine, int clueIndex, uint64_
 	}
 }
 
-/*
- * Computes the minimum number of cells required to place all clues starting
- * from the given clueIndex, including the required spaces between clues.
- *
- * Used to limit clue placement during permutation generation.
- */
-int totalRemainingLengthStart (Line * line, int clueIndex)
+void genStartMaxStart (LineClue * clueSet, int size)
 {
-	int i, length = 0, size = line->clueSet->clueCount;
+	int minLength = 0, clueIndex = clueSet->clueCount - 1;
 
-	for (i = clueIndex; i < size; ++i)
-		length += line->clueSet->clues[i];
+	for ( ; clueIndex >= 0; --clueIndex, ++minLength)
+	{
+		minLength += clueSet->clues[clueIndex];
+		clueSet->maxStart[clueIndex] = size - minLength;
+	}
+}
 
-	length += (size - clueIndex - 1);
+void genEndMaxStart (LineClue * clueSet, int size)
+{
+	int minLength = 0, clueIndex = 0;
 
-	return length;
+	for ( ; clueIndex < clueSet->clueCount; ++clueIndex, ++minLength)
+	{
+		minLength += clueSet->clues[clueIndex];
+		clueSet->maxStart[clueIndex] = size - minLength;
+	}
 }
 
 int totalRemainingLengthStartSubLine (SubLine * subLine, int clueIndex)
@@ -246,7 +256,7 @@ void generatePermutationsEnd (Line * line, int clueIndex, uint64_t current, uint
 	uint64_t groupBits, newBits, writtenBitsMask, compareMask;
 
 	groupSize = line->clueSet->clues[clueIndex];
-	maxStart = line->size - totalRemainingLengthEnd(line, clueIndex);
+	maxStart = line->clueSet->maxStart[clueIndex];
 	groupBits = (sizeBits - (sizeBits >> groupSize)) >> position;
 
 	/* Base Case: Last clue — no further recursion required */
@@ -334,24 +344,6 @@ void generateSubLinePermutationsEnd (SubLine * subLine, int clueIndex, uint64_t 
 
 		if (start >= subLine->size) break;
 	}
-}
-
-/*
- * Computes the minimum number of cells required to place all clues ending
- * from the given clueIndex, including the required spaces between clues.
- *
- * Used to limit clue placement during permutation generation.
- */
-int totalRemainingLengthEnd (Line * line, int clueIndex)
-{
-	int i, length = 0;
-
-	for (i = clueIndex; i >= 0; --i)
-		length += line->clueSet->clues[i];
-
-	length += clueIndex;
-
-	return length;
 }
 
 int totalRemainingLengthEndSubLine (SubLine * subLine, int clueIndex)

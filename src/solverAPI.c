@@ -431,7 +431,8 @@ void freeResources (SolverContext * solver)
 			{
 				if (solver->lineClues[i])
 				{
-					free(solver->lineClues[i]->clues);				
+					free(solver->lineClues[i]->clues);
+					free(solver->lineClues[i]->maxStart);				
 					free(solver->lineClues[i]);
 					solver->lineClues[i] = NULL;
 				}
@@ -504,7 +505,6 @@ char generationDecision (Line * line, Timings * timings, int * totalPermutations
 		else
 		{
 			updateSubLineBitMasks(line);
-
 			filterSubLinePermutations(line);
 		}
 
@@ -538,7 +538,7 @@ char lineGeneration (Line * line, Timings * timings, int * totalPermutations, in
 	timingStart(timings, GENERATION);
 
 	/* Actually generate and store the permutations */
-	generatePermutations(line, &(line->storeCount));
+	generatePermutations(line);
 
 	timingEnd(timings, GENERATION);
 	timingStart(timings, INIT);

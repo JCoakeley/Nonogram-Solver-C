@@ -1,65 +1,66 @@
-# Nonogram Solver (C Implementation)
+# Nonogram Puzzle Solver (C)
 
-## Overview
-This project is a C-based implementation of a **Nonogram solver**, designed for performance and efficiency.  
-It uses bitset-based filtering and permutation generation to solve large puzzles.
+A high-performance Nonogram puzzle solver written in C. It parses standard clue input files and outputs the fully solved board using optimized bitwise solving techniques.
 
-This is a continuation/port of the original Java version, with a focus on:
-- Low-level memory management
-- Efficient bit operations
-- Profiling & performance tuning with tools like `valgrind` and `gprof`
+## Features
 
----
+- **File-Based Input**: Reads board size and row/column clues from a plain text file.  
+- **Efficient Permutation Generation**: Recursively builds all valid line permutations with early pruning against partial solutions.  
+- **Bitwise Filtering**: Uses custom `BitSet` structures and bitmask checks to handle millions of permutations with minimal overhead.  
+- **Optimized Memory Usage**: Dynamically allocates permutation arrays and reallocates to fit the exact solution space.  
+- **Performance Benchmarking**: Tracks detailed timing stats (generation, filtering, solving) and supports averaged multi-run benchmarks.  
+- **Scalable**: Tested on puzzles up to 50×50 with multi-million permutation counts.
 
-## Project Structure
+## How It Works
+
+1. Loads a text file describing the puzzle:
+   ```
+   <width> <height>
+   <row clues...>
+   <column clues...>
+   ```
+2. Generates permutations for each row and column using recursive generation + bit shifts.  
+3. Applies early pruning, overlap logic, and filtering to iteratively solve the grid.  
+4. Outputs the solved board to the console, along with performance statistics.
+
+## Sample Input File
+
 ```
-project-root/
-├── src/          # Source code (.c files)
-├── include/      # Header files (.h files)
-├── build/        # Compiled objects and binaries
-├── tests/        # Unit tests
-├── Makefile      # Build system
-└── README.md     # Project documentation
-```
-
----
-
-## Building
-To compile the project, simply run:
-
-```bash
-make
-```
-
-This will build the executable(s) into the `build/` directory.
-
-To clean build artefacts:
-```bash
-make clean
-```
-
----
-
-## Running
-Once built, you can run the solver with:
-```bash
-./build/nonogram <input_file>
+5,5
+3
+3
+1
+3
+1,1,1
+2,1
+2
+2,2
+1
+3
 ```
 
----
+## Optimizations
 
-## Development Setup
-### Tools
-- **Git & GitHub** → version control
-- **Valgrind** → memory leak detection
-- **gprof**  → profiling and performance analysis
-- **gcc** → compiler toolchain
-
-
----
+- Bitmask-based representation of rows and columns (`uint64_t` arrays).  
+- Custom C `BitSet` with tracked bounds to speed up filtering.  
+- Early pruning eliminates invalid branches during permutation generation.  
+- Benchmark mode runs multiple iterations for averaged profiling data.  
 
 ## Future Work
-- Optimized BitSet implementation
-- Tree-based permutation filtering
-- Automated benchmarking scripts
-- Parallelism/multithreading support
+
+- Tree-based permutation filtering for large-scale puzzles.  
+- Generation shortcuts using partial permutations + bit shifts.  
+- Optional multithreading for very large puzzles.  
+- Expanded puzzle input format support.  
+
+## Example Output
+
+```
+ -------------
+ | ■ ■ ■ X X |
+ | ■ ■ ■ X X |
+ | X X X X ■ |
+ | X X ■ ■ ■ |
+ | ■ X ■ X ■ |
+ -------------
+```
